@@ -365,7 +365,7 @@ static int char32_to_utf8(char32_t c32, char* buffer) {
     }
 }
 
-/*  */
+/*  https://en.wikipedia.org/wiki/ANSI_escape_code#24-bit */
 static int color3i_to_ansi(Color3i color) {
     return 16 + clamp(color.r, 0, 5) * 36 + clamp(color.g, 0, 5) * 6 + clamp(color.b, 0, 5);
 }
@@ -412,8 +412,9 @@ void image_display(Image& f) {
     // Null terminate the entire string
     *b = '\0';
 
-    // ANSI escape sequence for "clear screen and go to top"
-    printf("\033[H\033[J%s", buffer);
+    // Clear screen: \033[H
+    // Go to top: \033[J
+    printf("\033[J%s", buffer);
 
     #ifndef _MSC_VER
     // Curses
