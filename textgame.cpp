@@ -83,6 +83,9 @@ void terminal_init() {
     
     // Make getch() non-blocking
     nodelay(stdscr, TRUE);
+    
+    // Hide the cursor
+    curs_set(0);
 }
 
 
@@ -412,13 +415,11 @@ void image_display(Image& f) {
     // Null terminate the entire string
     *b = '\0';
 
-    // Clear screen: \033[H
-    // Go to top: \033[J
-    printf("\033[J%s", buffer);
-
+    // Just move cursor to top and overwrite - no clearing!
+    printf("\033[H%s", buffer);
+    
     #ifndef _MSC_VER
-    // Curses
-    move(0, 0);
+    // Let curses know we've updated the screen
     refresh();
     #endif
     

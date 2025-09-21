@@ -10,17 +10,10 @@ int main(const int argc, const char* argv[]) {
     terminal_init();
     
     Key ch = KEY_NONE;
-    /*
-    while (ch != KEY_ESCAPE) {
-        ch = terminal_key();
-        printf("%d, %d\n", KEY_UP, ch);
-        usleep(30000);
-        }*/
-    
     while (ch != KEY_ESCAPE) {
         ch = terminal_key();
         
-        image_resize(image, terminal_size() - Vector2i(0, 1));
+        image_resize(image, terminal_size());
         
         for (int x = 1; x < image.size.x - 1; ++x) {
             image_set(image, Vector2i(x, 0), Pixel(RED, u'═'));
