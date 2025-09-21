@@ -3,13 +3,14 @@
 #include <unistd.h>
 #include <ncurses.h>
 
-Image image;
 
 int main(const int argc, const char* argv[]) {
 
     terminal_init();
+
+    Image image;
     image_resize(image, terminal_size());
-    
+
     for (int x = 1; x < image.size.x - 1; ++x) {
         image_set(image, Vector2i(x, 0), Pixel(RED, u'═'));
         image_set(image, Vector2i(x, image.size.y - 1), Pixel(RED, u'═'));

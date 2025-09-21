@@ -1,5 +1,6 @@
 #include "textgame.h"
 #include <stdlib.h>
+#include <cassert>
 
 const Color3i WHITE(5, 5, 5);
 const Color3i RED(5, 0, 0);
@@ -368,6 +369,25 @@ static int char32_to_utf8(char32_t c32, char* buffer) {
     }
 }
 
+/* Calculate the intersection of two rectangles */
+Rect rect_intersect(const Rect& a, const Rect& b) {
+    Rect result;
+    result.min.x = std::max(a.min.x, b.min.x);
+    result.min.y = std::max(a.min.y, b.min.y);
+    result.max.x = std::min(a.max.x, b.max.x);
+    result.max.y = std::min(a.max.y, b.max.y);
+    
+    // Ensure intersection is valid (min <= max)
+    if (result.min.x > result.max.x) {
+        result.max.x = result.min.x;
+    }
+    if (result.min.y > result.max.y) {
+        result.max.y = result.min.y;
+    }
+    
+    return result;
+}
+
 /*  https://en.wikipedia.org/wiki/ANSI_escape_code#24-bit */
 static int color3i_to_ansi(Color3i color) {
     return 16 + clamp(color.r, 0, 5) * 36 + clamp(color.g, 0, 5) * 6 + clamp(color.b, 0, 5);
@@ -440,6 +460,22 @@ void image_display(Image& f) {
     refresh();
     #endif
     
+}
+
+
+void image_push_intersect_clip(Image& img, Rect clip) {
+    assert(!img.clip.empty());
+    
+    // Push the intersection of current clipping region and new clip
+    img.clip.push_back(rect_intersect(img.clip.back(), clip));
+}
+
+
+void image_pop_clip(Image& img) {
+    // Only pop if there's more than one region (preserve the base region)
+    if (img.clip.size() > 1) {
+        img.clip.pop_back();
+    }
 }
 
 

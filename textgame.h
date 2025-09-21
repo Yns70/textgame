@@ -112,6 +112,9 @@ struct Rect {
     Vector2i    max;
 };
 
+/* Calculate the intersection of two rectangles */
+Rect rect_intersect(const Rect& a, const Rect& b);
+
 ///////////////////////////////////////////////////////////////////////
 
 /* ANSI color with each channel on the range 0-5 */
@@ -167,7 +170,8 @@ struct Image {
     /* Row-major */
     std::vector<Pixel> data;
 
-    /* Clipping region stack used for drawing operations */
+    /* Clipping region stack used for drawing operations. There is always at least one clipping region,
+       which is the full image. */
     std::vector<Rect> clip;
 
     Image() {}
@@ -184,6 +188,12 @@ void image_set(Image& img, Vector2i pix, Pixel val);
 /* Ignores the current clipping region */
 Pixel image_get(const Image& img, Vector2i pix);
 void image_display(Image& img);
+
+/* Pops the top of the clipping region stack, if it has more than 1 region*/
+void image_pop_clip(Image& img);
+
+/* Pushes the intersection of the current clipping region and the specified region. */
+void image_push_intersect_clip(Image& img, Rect clip);
 
 /* Blits src into dst, clipping to each and treating the specified character as transparent. 
    If overwrite_bg is true, the bg color of src is copied to dst, otherwise the bg color
