@@ -1,5 +1,1 @@
-- Try converting to curses fully
 - Test colors and output on Windows
-- Implement clipping regions
-- Implement blit
-- Implement print
