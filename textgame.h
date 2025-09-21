@@ -200,8 +200,11 @@ void image_push_intersect_clip(Image& img, Rect clip);
    of each dst pixel is preserved. */
 void image_blit(Image& dst, Vector2i dst_corner, const Image& src, Vector2i src_corner, Vector2i size, bool overwrite_bg = false, Character transparent = '\0');
 
-/* Prints a string of characters into the image, starting at the specified corner. Clips to the edge of the image. 
-   Newlines or hitting word_wrap will cause a newline to be inserted. Obeys the current image clipping region. */
+/* Prints a string of characters into the image, starting at the specified corner. 
+   Newlines or hitting word_wrap characters from corner.x will cause the text to wrap
+   down to the next y line, looking up to 10 characters backwards to find a breaking
+   character (space, newline, or punctuation) at which to break the current line. Obeys the current
+   image clipping region. */
 void image_print(Image& img, Vector2i corner, const String& str, Color3i fg = WHITE, Color3i bg = BLACK, bool overwrite_bg = false, int word_wrap = INT_MAX);
 
 #ifdef _MSC_VER
