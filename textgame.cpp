@@ -375,12 +375,24 @@ static int color3i_to_ansi(Color3i color) {
 
 
 void image_display(Image& f) {
+    // Get terminal dimensions for clipping
+    Vector2i term_size = terminal_size();
+    
+    // Calculate the actual drawing area (intersection of image and terminal)
+    Vector2i draw_size;
+    draw_size.x = (f.size.x < term_size.x) ? f.size.x : term_size.x;
+    draw_size.y = (f.size.y < term_size.y) ? f.size.y : term_size.y;
+    
+    // Skip if nothing to draw
+    if (draw_size.x <= 0 || draw_size.y <= 0) {
+        return;
+    }
 
     // Avoid per-frame allocation
     static char* buffer = nullptr;
     static size_t buffer_size = 0;
 
-    // Allocate a buffer large enough for the entire image when converted to UTF-8.
+    // Allocate a buffer large enough for the clipped image when converted to UTF-8.
     // Each pixel requires: 
     //     Up to 4 bytes for the character
     //     11 bytes for the fg color
@@ -388,23 +400,27 @@ void image_display(Image& f) {
     //   -----
     //     26 bytes per pixel
     //
+    // Plus up to 12 bytes for cursor positioning per line
     // One byte is required for the null terminator on the entire string
-    size_t required_size = 26 * f.size.x * f.size.y + 1;
+    size_t required_size = (26 * draw_size.x + 12) * draw_size.y + 1;
 
     if (buffer_size < required_size) {
         free(buffer);
-        buffer_size = 0;
-        buffer = nullptr;
-    }
-
-    if (! buffer) {
+        buffer_size = required_size;
         buffer = (char*)calloc(required_size, sizeof(char));
     }
     
     char* b = buffer;
-    const Pixel* p = f.data.data();
-    for (int y = 0; y < f.size.y; ++y) {
-        for (int x = 0; x < f.size.x; ++x, ++p) {
+    
+    // Draw only the visible portion of the image
+    for (int y = 0; y < draw_size.y; ++y) {
+        // Position cursor at start of line
+        b += snprintf(b, required_size - (b - buffer), "\033[%d;1H", y + 1);
+        
+        const Pixel* line_start = f.data.data() + y * f.size.x;
+        for (int x = 0; x < draw_size.x; ++x) {
+            const Pixel* p = line_start + x;
+            
             b += snprintf(b, required_size - (b - buffer), "\033[38;5;%dm\033[48;5;%dm",
                    color3i_to_ansi(p->fg),
                    color3i_to_ansi(p->bg));
@@ -412,11 +428,12 @@ void image_display(Image& f) {
             b += char32_to_utf8(p->ch, b);
         }
     }
+    
     // Null terminate the entire string
     *b = '\0';
 
-    // Just move cursor to top and overwrite - no clearing!
-    printf("\033[H%s", buffer);
+    // Write the clipped content
+    printf("%s", buffer);
     
     #ifndef _MSC_VER
     // Let curses know we've updated the screen
