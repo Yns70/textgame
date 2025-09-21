@@ -404,8 +404,8 @@ void image_display(Image& f) {
     
     // Calculate the actual drawing area (intersection of image and terminal)
     Vector2i draw_size;
-    draw_size.x = (f.size.x < term_size.x) ? f.size.x : term_size.x;
-    draw_size.y = (f.size.y < term_size.y) ? f.size.y : term_size.y;
+    draw_size.x = std::min(f.size.x, term_size.x);
+    draw_size.y = std::min(f.size.y, term_size.y);
     
     // Skip if nothing to draw
     if (draw_size.x <= 0 || draw_size.y <= 0) {
