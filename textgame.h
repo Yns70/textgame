@@ -10,22 +10,42 @@
   supported by more fonts than the Unicode Box Drawing Block), the Unicode Geometric
   Shapes Block, the Unicode Arrows Block, and the Unicode Chess Pieces. Some useful characters:
 
-  ←	 ↑	→	↓	↔	↕	↖	↗	↘	↙
-  ↰	 ↱	↲	↳	↴   ⇦	⇧	⇨	⇩
+  ←  ↑  →  ↓  ↔  ↕  ↖  ↗  ↘  ↙
+  ⇦  ⇧  ⇨  ⇩  ↰  ↱  ↲  ↳  ↴
 
-  ░	▒	▓	█	▄	▌	▐	▀
+  ░  ▒  ▓  █  ▄  ▌  ▐  ▀
+
+  ┌  ┬  ┐  ├  ┼  ┤  └  ┴  ┘  │  ─
   
-  │	┤	╡	╢	╖	╕	╣	║	╗	╝	╜	╛	┐
-  └	┴	┬	├	─	┼	╞	╟	╚	╔	╩	╦	╠	═	╬	╧
-  ╨	╤	╥	╙	╘	╒	╓	╫	╪	┘	┌	
+  ╔  ╦  ╗  ╠  ╬  ╣  ╚  ╩  ╝  ║  ═
 
-  ◢	◣	◤	◥  ◸	◹	◺   ◿
-  ▲	△	▴	▵	▶	▷	▸	▹	▼	▽	▾	▿ ◀	◁	◂	◃
-  ■	□	▢	▣  ◎	●
-  ◆	◇	◈	◉  ○
+  ╒  ╤  ╕  ╞  ╪  ╡  ╘  ╧  ╛  ╓  ╥
 
-  ♠	♥	♦	♣   ♤	♡	♢	♧
-  ♔	♕	♖	♗	♘	♙	♚	♛	♜	♝	♞	♟
+  ╖  ╟  ╫  ╢  ╙  ╨  ╜
+
+  ▲  ▼  ◀  ▶ 
+
+  △  ▽  ◁  ▷  
+  
+  ▴  ▾  ◂  ▸
+  
+  ▵  ▿  ◃  ▹  
+  
+  ◢  ◣  ◤  ◥
+  
+  ◿  ◺  ◸  ◹    
+  
+  ■  □  ▢  ▣    
+  
+  ●  ○  ◎  ◉  ◇  ◆  ◈
+  
+  ♠  ♥  ♦  ♣
+  
+  ♤  ♡  ♢  ♧
+  
+  ♔  ♕  ♖  ♗  ♘  ♙
+  
+  ♚  ♛  ♜  ♝  ♞  ♟
 
  */
 #pragma once
