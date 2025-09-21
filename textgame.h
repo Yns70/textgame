@@ -31,12 +31,15 @@
 #pragma once
 
 #include <algorithm>
+#include <string>
+#include <vector>
 
 template<typename T>
 T clamp(T value, T min_val, T max_val) {
     return std::max(min_val, std::min(value, max_val));
 }
 
+using String = std::u32string;
 using Character = char32_t;
 struct Vector2i;
 struct Color3i;
@@ -103,6 +106,14 @@ bool operator!=(const Vector2i& a, const Vector2i& b);
 
 ///////////////////////////////////////////////////////////////////////
 
+/* Inclusive on both edges */
+struct Rect {
+    Vector2i    min;
+    Vector2i    max;
+};
+
+///////////////////////////////////////////////////////////////////////
+
 /* ANSI color with each channel on the range 0-5 */
 struct Color3i {
     int r;
@@ -122,6 +133,20 @@ extern const Color3i CYAN;
 extern const Color3i MAGENTA;
 extern const Color3i YELLOW;
 
+// Global operator forward declarations for Color3i
+Color3i operator+(const Color3i& a, const Color3i& b);
+Color3i& operator+=(Color3i& a, const Color3i& b);
+Color3i operator-(const Color3i& a, const Color3i& b);
+Color3i& operator-=(Color3i& a, const Color3i& b);
+Color3i operator*(const Color3i& a, const Color3i& b);
+Color3i operator*(const Color3i& a, int b);
+Color3i& operator*=(Color3i& a, const Color3i& b);
+Color3i operator/(const Color3i& a, int b);
+Color3i operator/(const Color3i& a, const Color3i& b);
+Color3i& operator/=(Color3i& a, const Color3i& b);
+bool operator==(const Color3i& a, const Color3i& b);
+bool operator!=(const Color3i& a, const Color3i& b);
+
 ////////////////////////////////////////////////////////////////////////
 
 struct Pixel {
@@ -138,25 +163,36 @@ struct Pixel {
 
 struct Image {
     Vector2i    size;
-    /* Row-major */
-    Pixel*      data;
 
-    Image() : data(nullptr) {}
+    /* Row-major */
+    std::vector<Pixel> data;
+
+    /* Clipping region stack used for drawing operations */
+    std::vector<Rect> clip;
+
+    Image() {}
     Image(Vector2i size, Pixel value = Pixel(' '));
-    ~Image() { free(data); }
 };
 
-
+/* Clears the image and the clipping region stack back to the full image */
 void image_resize(Image& img, Vector2i new_size);
 void image_clear(Image& img, Pixel value);
+
+/* Obeys the current clipping region */ 
 void image_set(Image& img, Vector2i pix, Pixel val);
+
+/* Ignores the current clipping region */
 Pixel image_get(const Image& img, Vector2i pix);
 void image_display(Image& img);
 
 /* Blits src into dst, clipping to each and treating the specified character as transparent. 
    If overwrite_bg is true, the bg color of src is copied to dst, otherwise the bg color
    of each dst pixel is preserved. */
-void image_blit(Image& dst, Vector2i dst_corner, const Image& src, Vector2i src_corner, Vector2i size, bool overwrite_bg = true, Character transparent = '\0');
+void image_blit(Image& dst, Vector2i dst_corner, const Image& src, Vector2i src_corner, Vector2i size, bool overwrite_bg = false, Character transparent = '\0');
+
+/* Prints a string of characters into the image, starting at the specified corner. Clips to the edge of the image. 
+   Newlines or hitting word_wrap will cause a newline to be inserted. Obeys the current image clipping region. */
+void image_print(Image& img, Vector2i corner, const String& str, Color3i fg = WHITE, Color3i bg = BLACK, bool overwrite_bg = false, int word_wrap = INT_MAX);
 
 #ifdef _MSC_VER
 // https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/kbhit?view=msvc-170

@@ -199,20 +199,88 @@ bool operator!=(const Vector2i& a, const Vector2i& b) {
     return !(a == b);
 }
 
+// Global operator implementations for Color3i
+Color3i operator+(const Color3i& a, const Color3i& b) {
+    return Color3i(a.r + b.r, a.g + b.g, a.b + b.b);
+}
+
+Color3i& operator+=(Color3i& a, const Color3i& b) {
+    a.r += b.r;
+    a.g += b.g;
+    a.b += b.b;
+    return a;
+}
+
+Color3i operator-(const Color3i& a, const Color3i& b) {
+    return Color3i(a.r - b.r, a.g - b.g, a.b - b.b);
+}
+
+Color3i& operator-=(Color3i& a, const Color3i& b) {
+    a.r -= b.r;
+    a.g -= b.g;
+    a.b -= b.b;
+    return a;
+}
+
+Color3i operator*(const Color3i& a, const Color3i& b) {
+    return Color3i(a.r * b.r, a.g * b.g, a.b * b.b);
+}
+
+Color3i operator*(const Color3i& a, int b) {
+    return Color3i(a.r * b, a.g * b, a.b * b);
+}
+
+Color3i& operator*=(Color3i& a, const Color3i& b) {
+    a.r *= b.r;
+    a.g *= b.g;
+    a.b *= b.b;
+    return a;
+}
+
+/* Integer division */
+Color3i operator/(const Color3i& a, int b) {
+    return Color3i(a.r / b, a.g / b, a.b / b);
+}
+
+/* Integer division */
+Color3i operator/(const Color3i& a, const Color3i& b) {
+    return Color3i(a.r / b.r, a.g / b.g, a.b / b.b);
+}
+
+/* Integer division */
+Color3i& operator/=(Color3i& a, const Color3i& b) {
+    a.r /= b.r;
+    a.g /= b.g;
+    a.b /= b.b;
+    return a;
+}
+
+bool operator==(const Color3i& a, const Color3i& b) {
+    return a.r == b.r && a.g == b.g && a.b == b.b;
+}
+
+bool operator!=(const Color3i& a, const Color3i& b) {
+    return !(a == b);
+}
 
 //////////////////////////////////////////////////////////////////////////////////
 
+Image::Image(Vector2i size, Pixel value) {
+    image_resize(*this, size);
+}
+
 void image_resize(Image& f, Vector2i new_size) {
-    free(f.data);
     f.size = new_size;
-    f.data = (Pixel*)malloc(f.size.x * f.size.y * sizeof(Pixel));
+    f.data.resize(f.size.x * f.size.y);
+    f.clip.clear();
+    f.clip.push_back({Vector2i(0, 0), f.size});
     image_clear(f, ' ');
 }
 
 
 void image_clear(Image& f, Pixel value) {
     const int n = f.size.x * f.size.y;
-    Pixel* p = f.data;
+    Pixel* p = f.data.data();
     for (int i = 0; i < n; ++i, ++p) {
         *p = value;
     }
@@ -304,9 +372,8 @@ static int color3i_to_ansi(Color3i color) {
 
 
 void image_display(Image& f) {
-    // ANSI escape sequence for "clear screen and go to top"
-    printf("\033[H\033[J");
 
+    // Avoid per-frame allocation
     static char* buffer = nullptr;
     static size_t buffer_size = 0;
 
@@ -332,7 +399,7 @@ void image_display(Image& f) {
     }
     
     char* b = buffer;
-    const Pixel* p = f.data;
+    const Pixel* p = f.data.data();
     for (int y = 0; y < f.size.y; ++y) {
         for (int x = 0; x < f.size.x; ++x, ++p) {
             b += snprintf(b, required_size - (b - buffer), "\033[38;5;%dm\033[48;5;%dm",
@@ -345,7 +412,8 @@ void image_display(Image& f) {
     // Null terminate the entire string
     *b = '\0';
 
-    printf("%s", buffer);
+    // ANSI escape sequence for "clear screen and go to top"
+    printf("\033[H\033[J%s", buffer);
 
     #ifndef _MSC_VER
     // Curses
