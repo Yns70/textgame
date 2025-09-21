@@ -48,13 +48,13 @@ int main(const int argc, const char* argv[]) {
         
         // Handle player movement
         Vector2i new_pos = player_pos;
-        if (ch == 'w' || ch == 'W') {
+        if (ch == 'w' || ch == 'W' || ch == KEY_UP) {
             --new_pos.y;
-        } else if (ch == 's' || ch == 'S') {
+        } else if (ch == 's' || ch == 'S' || ch == KEY_DOWN) {
             ++new_pos.y;
-        } else if (ch == 'a' || ch == 'A') {
+        } else if (ch == 'a' || ch == 'A' || ch == KEY_LEFT) {
             --new_pos.x;
-        } else if (ch == 'd' || ch == 'D') {
+        } else if (ch == 'd' || ch == 'D' || ch == KEY_RIGHT) {
             ++new_pos.x;
         }
         

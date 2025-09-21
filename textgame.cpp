@@ -57,6 +57,7 @@ Vector2i terminal_size() {
                     csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
 }
 
+
 void terminal_cleanup() {
     // Reset the terminal
     printf("\x1b[0m\n");
@@ -92,7 +93,7 @@ void terminal_init() {
 
 Key terminal_key() {
     // ncurses
-    const char c = getch();
+    const Key c = getch();
     return (c == ERR) ? '\0' : c;
 }
 
