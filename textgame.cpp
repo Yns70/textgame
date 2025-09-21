@@ -292,12 +292,15 @@ void image_clear(Image& f, Pixel value) {
 
 
 void image_set(Image& f, Vector2i pix, Pixel val) {
-    if ((val.ch != '\0') &&
-        (pix.x >= 0) &&
-        (pix.y >= 0) &&
-        (pix.x < f.size.x) &&
-        (pix.y < f.size.y)) {
-        f.data[pix.x + pix.y * f.size.x] = val;
+    assert(!f.clip.empty());
+    
+    if (val.ch != '\0') {
+        // Check if pixel is within current clipping region
+        const Rect& clip = f.clip.back();
+        if (pix.x >= clip.min.x && pix.x <= clip.max.x &&
+            pix.y >= clip.min.y && pix.y <= clip.max.y) {
+            f.data[pix.x + pix.y * f.size.x] = val;
+        }
     }
 }
 
@@ -485,6 +488,33 @@ void image_blit
  const Image& src,
  Vector2i src_corner,
  Vector2i size,
- bool overwrite_bg) {
-    // TODO
+ bool overwrite_bg,
+ Character transparent) {
+    assert(!dst.clip.empty());
+    
+    for (int y = 0; y < size.y; ++y) {
+        for (int x = 0; x < size.x; ++x) {
+            Vector2i src_pos = src_corner + Vector2i(x, y);
+            Vector2i dst_pos = dst_corner + Vector2i(x, y);
+            
+            // Get source pixel (bounds checking handled by image_get)
+            Pixel src_pixel = image_get(src, src_pos);
+            
+            // Skip transparent pixels
+            if (src_pixel.ch == transparent) {
+                continue;
+            }
+            
+            // Prepare destination pixel
+            Pixel dst_pixel = src_pixel;
+            if (!overwrite_bg) {
+                // Preserve destination background color
+                Pixel existing = image_get(dst, dst_pos);
+                dst_pixel.bg = existing.bg;
+            }
+            
+            // Set pixel (clipping handled by image_set)
+            image_set(dst, dst_pos, dst_pixel);
+        }
+    }
 }
