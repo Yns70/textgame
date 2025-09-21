@@ -9,7 +9,7 @@ int main(const int argc, const char* argv[]) {
 
     terminal_init();
     
-    Key ch = '\0';
+    Key ch = KEY_NONE;
     /*
     while (ch != KEY_ESCAPE) {
         ch = terminal_key();

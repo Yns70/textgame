@@ -1,5 +1,31 @@
 /*
-  Defines in a platform independent way:
+  @file textgame.h
+
+  @brief A platform independent library for text-based games such as Dwarf Fortress and Rogue
+
+  Copyright (c) 2025 Shmuel
+  Available under the the MIT License 
+
+  Supports 32-bit Unicode, including the Unicode DOS Code Page Block (which may be
+  supported by more fonts than the Unicode Box Drawing Block), the Unicode Geometric
+  Shapes Block, the Unicode Arrows Block, and the Unicode Chess Pieces. Some useful characters:
+
+  ←	 ↑	→	↓	↔	↕	↖	↗	↘	↙
+  ↰	 ↱	↲	↳	↴   ⇦	⇧	⇨	⇩
+
+  ░	▒	▓	█	▄	▌	▐	▀
+  
+  │	┤	╡	╢	╖	╕	╣	║	╗	╝	╜	╛	┐
+  └	┴	┬	├	─	┼	╞	╟	╚	╔	╩	╦	╠	═	╬	╧
+  ╨	╤	╥	╙	╘	╒	╓	╫	╪	┘	┌	
+
+  ◢	◣	◤	◥  ◸	◹	◺   ◿
+  ▲	△	▴	▵	▶	▷	▸	▹	▼	▽	▾	▿ ◀	◁	◂	◃
+  ■	□	▢	▣  ◎	●
+  ◆	◇	◈	◉  ○
+
+  ♠	♥	♦	♣   ♤	♡	♢	♧
+  ♔	♕	♖	♗	♘	♙	♚	♛	♜	♝	♞	♟
 
  */
 #pragma once

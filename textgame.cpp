@@ -243,46 +243,57 @@ Pixel image_get(const Image& f, Vector2i pix) {
 
 
 /**
- Converts a single UTF-16 code unit (char16_t) to a UTF-8 sequence.
+ Converts a single 32-bit Unicode code point (char32_t) to a UTF-8 sequence.
  
- This function handles any Unicode code point in the Basic Multilingual Plane (BMP),
- which is the range U+0000 to U+FFFF. It does not process surrogate pairs.
- Any input in the invalid surrogate range (U+D800 to U+DFFF) is converted to
- the UTF-8 representation of the replacement character, U+FFFD ().
+ This function handles any valid Unicode code point in the range U+0000 to U+10FFFF.
+ Invalid code points (above U+10FFFF or in the surrogate range U+D800 to U+DFFF)
+ are converted to the UTF-8 representation of the replacement character, U+FFFD ().
  
- - c16 The input char16_t character.
+ - c32 The input char32_t character (32-bit Unicode code point).
  - buffer A pointer to a character array where the UTF-8 sequence
-   will be written. This buffer must be four bytes.
+   will be written. This buffer must be at least 4 bytes to handle the longest
+   possible UTF-8 sequence.
+
+ Returns the number of bytes written to the buffer.
 */
-static void u16_to_u8(char16_t c16, char* buffer) {
-    // 1-byte sequence for U+0000 to U+007F (ASCII)
-    // Format: 0xxxxxxx
-    if (c16 < 0x80) {
-        buffer[0] = static_cast<char>(c16);
-        buffer[1] = '\0';
-    }
-    // 2-byte sequence for U+0080 to U+07FF
-    // Format: 110yyyyy 10xxxxxx
-    else if (c16 < 0x800) {
-        buffer[0] = static_cast<char>(0xC0 | (c16 >> 6));
-        buffer[1] = static_cast<char>(0x80 | (c16 & 0x3F));
-        buffer[2] = '\0';
-    }
-    // Invalid surrogate range U+D800 to U+DFFF
+static int char32_to_utf8(char32_t c32, char* buffer) {
+    // Invalid code points: above U+10FFFF or in surrogate range U+D800 to U+DFFF
     // Replace with U+FFFD, which is EF BF BD in UTF-8
-    else if (c16 >= 0xD800 && c16 <= 0xDFFF) {
+    if (c32 > 0x10FFFF || (c32 >= 0xD800 && c32 <= 0xDFFF)) {
         buffer[0] = static_cast<char>(0xEF);
         buffer[1] = static_cast<char>(0xBF);
         buffer[2] = static_cast<char>(0xBD);
-        buffer[3] = '\0';
+        return 3;
     }
-    // 3-byte sequence for U+0800 to U+FFFF (excluding surrogates)
+    // 1-byte sequence for U+0000 to U+007F (ASCII)
+    // Format: 0xxxxxxx
+    else if (c32 < 0x80) {
+        buffer[0] = static_cast<char>(c32);
+        return 1;
+    }
+    // 2-byte sequence for U+0080 to U+07FF
+    // Format: 110yyyyy 10xxxxxx
+    else if (c32 < 0x800) {
+        buffer[0] = static_cast<char>(0xC0 | (c32 >> 6));
+        buffer[1] = static_cast<char>(0x80 | (c32 & 0x3F));
+        return 2;
+    }
+    // 3-byte sequence for U+0800 to U+FFFF
     // Format: 1110zzzz 10yyyyyy 10xxxxxx
+    else if (c32 < 0x10000) {
+        buffer[0] = static_cast<char>(0xE0 | (c32 >> 12));
+        buffer[1] = static_cast<char>(0x80 | ((c32 >> 6) & 0x3F));
+        buffer[2] = static_cast<char>(0x80 | (c32 & 0x3F));
+        return 3;
+    }
+    // 4-byte sequence for U+10000 to U+10FFFF
+    // Format: 11110www 10zzzzzz 10yyyyyy 10xxxxxx
     else {
-        buffer[0] = static_cast<char>(0xE0 | (c16 >> 12));
-        buffer[1] = static_cast<char>(0x80 | ((c16 >> 6) & 0x3F));
-        buffer[2] = static_cast<char>(0x80 | (c16 & 0x3F));
-        buffer[3] = '\0';
+        buffer[0] = static_cast<char>(0xF0 | (c32 >> 18));
+        buffer[1] = static_cast<char>(0x80 | ((c32 >> 12) & 0x3F));
+        buffer[2] = static_cast<char>(0x80 | ((c32 >> 6) & 0x3F));
+        buffer[3] = static_cast<char>(0x80 | (c32 & 0x3F));
+        return 4;
     }
 }
 
@@ -296,21 +307,45 @@ void image_display(Image& f) {
     // ANSI escape sequence for "clear screen and go to top"
     printf("\033[H\033[J");
 
-    // UTF-8 conversion buffer
-    char buffer[4];
+    static char* buffer = nullptr;
+    static size_t buffer_size = 0;
 
-    // TODO: ssprintf to a buffer, then send to screen at once
+    // Allocate a buffer large enough for the entire image when converted to UTF-8.
+    // Each pixel requires: 
+    //     Up to 4 bytes for the character
+    //     11 bytes for the fg color
+    //     11 bytes for the bg color
+    //   -----
+    //     26 bytes per pixel
+    //
+    // One byte is required for the null terminator on the entire string
+    size_t required_size = 26 * f.size.x * f.size.y + 1;
+
+    if (buffer_size < required_size) {
+        free(buffer);
+        buffer_size = 0;
+        buffer = nullptr;
+    }
+
+    if (! buffer) {
+        buffer = (char*)calloc(required_size, sizeof(char));
+    }
+    
+    char* b = buffer;
     const Pixel* p = f.data;
     for (int y = 0; y < f.size.y; ++y) {
         for (int x = 0; x < f.size.x; ++x, ++p) {
-            u16_to_u8(p->ch, buffer);
-            printf("\033[38;5;%dm\033[48;5;%dm%s",
+            b += snprintf(b, required_size - (b - buffer), "\033[38;5;%dm\033[48;5;%dm",
                    color3i_to_ansi(p->fg),
-                   color3i_to_ansi(p->bg),
-                   buffer);
+                   color3i_to_ansi(p->bg));
+            
+            b += char32_to_utf8(p->ch, b);
         }
-        printf("\n");
     }
+    // Null terminate the entire string
+    *b = '\0';
+
+    printf("%s", buffer);
 
     #ifndef _MSC_VER
     // Curses
