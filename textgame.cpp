@@ -518,3 +518,55 @@ void image_blit
         }
     }
 }
+
+
+int image_print(Image& img, Vector2i corner, const String& str, Color3i fg, Color3i bg, bool overwrite_bg, int word_wrap) {
+    assert(!img.clip.empty());
+    
+    Vector2i pos = corner;
+    int lines_written = 1; // Start with 1 since we're on the first line
+    
+    for (size_t i = 0; i < str.length(); ++i) {
+        Character ch = str[i];
+        
+        // Handle explicit newlines
+        if (ch == U'\n') {
+            pos.x = corner.x;
+            ++pos.y;
+            ++lines_written;
+            continue;
+        }
+        
+        // Check if we need to wrap
+        if (pos.x >= corner.x + word_wrap) {
+            // Look backwards up to 10 characters for a good break point
+            size_t break_pos = i;
+            int lookback = 0;
+            
+            while (lookback < 10 && break_pos > 0) {
+                Character prev_ch = str[break_pos - 1];
+                if (prev_ch == U' ' || prev_ch == U'\n' || prev_ch == U'-' || 
+                    prev_ch == U'.' || prev_ch == U',' || prev_ch == U';' || 
+                    prev_ch == U':' || prev_ch == U'!' || prev_ch == U'?') {
+                    // Found a good break point
+                    i = break_pos - 1; // Will be incremented by loop
+                    break;
+                }
+                --break_pos;
+                ++lookback;
+            }
+            
+            // Move to next line
+            pos.x = corner.x;
+            ++pos.y;
+            ++lines_written;
+            continue;
+        }
+        
+        // Place the character (clipping handled by image_set)
+        image_set(img, pos, Pixel(fg, ch, overwrite_bg ? bg : image_get(img, pos).bg));
+        ++pos.x;
+    }
+    
+    return lines_written;
+}
