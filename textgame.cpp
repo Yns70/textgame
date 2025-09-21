@@ -1,6 +1,8 @@
 #include "textgame.h"
 #include <stdlib.h>
 #include <cassert>
+#include <chrono>
+#include <thread>
 
 const Color3i WHITE(5, 5, 5);
 const Color3i RED(5, 0, 0);
@@ -35,8 +37,14 @@ const Key KEY_F8 = 0420;
 const Key KEY_F9 = 0421;
 const Key KEY_F10 = 0422;
 
+
+void sleep(float seconds) {
+    std::this_thread::sleep_for(std::chrono::microseconds(long(seconds * 1e6f)));
+}
+
 #ifdef _MSC_VER
 
+#define NOMINMAX
 #include <windows.h>
 #include <stdio.h>
 #include <conio.h>

@@ -100,6 +100,8 @@ void terminal_cleanup();
 Key terminal_key();
 Vector2i terminal_size();
 
+void sleep(float seconds);
+
 /////////////////////////////////////////////////////////////////////////
 
 struct Vector2i {
