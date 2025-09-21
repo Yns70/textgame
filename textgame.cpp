@@ -365,7 +365,7 @@ static int char32_to_utf8(char32_t c32, char* buffer) {
     }
 }
 
-
+/*  */
 static int color3i_to_ansi(Color3i color) {
     return 16 + clamp(color.r, 0, 5) * 36 + clamp(color.g, 0, 5) * 6 + clamp(color.b, 0, 5);
 }
