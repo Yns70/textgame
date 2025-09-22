@@ -52,8 +52,10 @@
  */
 #pragma once
 
+#ifdef _MSC_VER
 // For Windows to allow unicode literals
 #pragma execution_character_set("utf-8")
+#endif
 
 #include <algorithm>
 #include <string>
@@ -72,7 +74,7 @@ struct Color3i;
 /////////////////////////////////////////////////////////////////////////
 
 /* See the KEY_ constants */
-using Key = uint32_t;
+using Key = int32_t;
 
 extern const Key KEY_NONE;
 extern const Key KEY_ESCAPE;
