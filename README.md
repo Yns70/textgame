@@ -5,7 +5,7 @@ real-time games that run in a terminal in text mode.
 
 # Features
 
-- Windows 11, macOS, Linux
+- Windows 11 terminal, macOS Tahoe Terminal, macOS iTerm2, Linux xterm
 - 24-bit (RBA8) color for foreground and background
 - Keyboard input
 - Clipping region stack

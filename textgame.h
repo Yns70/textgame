@@ -8,11 +8,16 @@
 
   Supports RGB8 color for foreground and background colors.
 
-  Supports 32-bit Unicode characters, including the Unicode DOS Code Page Block (which may be
-  supported by more fonts than the Unicode Box Drawing Block), the Unicode Geometric
-  Shapes Block, the Unicode Arrows Block, and the Unicode Chess Pieces. Some useful characters:
+  Use Character and String with the routines for full Unicode support
+  (String = std::basic_string<char32_t>).
+
+  Some useful characters from the Unicode DOS Code Page Block (which
+  may be supported by more fonts than the Unicode Box Drawing Block),
+  the Unicode Geometric Shapes Block, the Unicode Arrows Block, and
+  the Unicode Chess Pieces Block are:
 
   ←  ↑  →  ↓  ↔  ↕  ↖  ↗  ↘  ↙
+
   ⇦  ⇧  ⇨  ⇩  ↰  ↱  ↲  ↳  ↴
 
   ░  ▒  ▓  █  ▄  ▌  ▐  ▀
@@ -61,20 +66,17 @@
 #include <string>
 #include <vector>
 
-template<typename T>
-T clamp(T value, T min_val, T max_val) {
-    return std::max(min_val, std::min(value, max_val));
-}
+// Types:
 
 using String = std::u32string;
 using Character = char32_t;
 struct Vector2i;
 struct Color3i;
-
-/////////////////////////////////////////////////////////////////////////
-
+struct Mouse;
 /* See the KEY_ constants */
 using Key = int32_t;
+
+/////////////////////////////////////////////////////////////////////////
 
 extern const Key KEY_NONE;
 extern const Key KEY_ESCAPE;
@@ -99,17 +101,28 @@ extern const Key KEY_F8;
 extern const Key KEY_F9;
 extern const Key KEY_F10;
 
-
 /////////////////////////////////////////////////////////////////////////
 
 void terminal_init();
 void terminal_cleanup();
-Key terminal_key();
+
+/* Get the next keystroke in the keyboard queue */
+Key terminal_read_keyboard();
+
+/* Get the latest state of the mouse */
+Mouse terminal_read_mouse();
+
 Vector2i terminal_size();
 
 void sleep(float seconds);
 
 /////////////////////////////////////////////////////////////////////////
+
+template<typename T>
+T clamp(T value, T min_val, T max_val) {
+    return std::max(min_val, std::min(value, max_val));
+}
+
 
 struct Vector2i {
     int x;
@@ -132,6 +145,18 @@ Vector2i operator/(const Vector2i& a, const Vector2i& b);
 Vector2i& operator/=(Vector2i& a, const Vector2i& b);
 bool operator==(const Vector2i& a, const Vector2i& b);
 bool operator!=(const Vector2i& a, const Vector2i& b);
+
+///////////////////////////////////////////////////////////////////////
+
+struct Mouse {
+    Vector2i   position;
+    /* bit 0 is button 1, etc.
+
+     bit 3 is mouse wheel up, bit 4 is mouse wheel down*/
+    uint32_t   button;
+    Mouse() : button(0) {}
+};
+
 
 ///////////////////////////////////////////////////////////////////////
 
@@ -240,9 +265,18 @@ void image_push_intersect_clip(Image& img, Rect clip);
    of each dst pixel is preserved. */
 void image_blit(Image& dst, Vector2i dst_corner, const Image& src, Vector2i src_corner, Vector2i size, bool overwrite_bg = false, Character transparent = '\0');
 
-/* Prints a string of characters into the image, starting at the specified corner. 
-   Newlines or hitting word_wrap characters from corner.x will cause the text to wrap
-   down to the next y line, looking up to 10 characters backwards to find a breaking
-   character (space, newline, or punctuation) at which to break the current line. Obeys the current
-   image clipping region. Returns the number of lines written. */
-int image_print(Image& img, Vector2i corner, const String& str, Color3 fg = WHITE, Color3 bg = BLACK, bool overwrite_bg = false, int word_wrap = 100000);
+/* Prints a string of characters into the image, starting at the
+   specified corner.  Newlines or hitting word_wrap characters from
+   corner.x will cause the text to wrap down to the next y line,
+   looking up to 10 characters backwards to find a breaking character
+   (space, newline, or punctuation) at which to break the current
+   line. Obeys the current image clipping region. Returns the number
+   of lines written. */
+int image_print
+(Image& img,
+ Vector2i corner,
+ const String& str,
+ Color3 fg = WHITE,
+ Color3 bg = BLACK,
+ bool overwrite_bg = false,
+ int word_wrap = 100000);

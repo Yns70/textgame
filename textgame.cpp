@@ -113,6 +113,9 @@ void sleep(float seconds) {
     std::this_thread::sleep_for(std::chrono::microseconds(long(seconds * 1e6f)));
 }
 
+static Mouse mouse;
+
+
 #ifdef _MSC_VER
 
 #define NOMINMAX
@@ -162,7 +165,14 @@ void terminal_cleanup() {
     printf("\x1b[0m\n");
 }
 
-Key terminal_key() {
+
+Mouse terminal_read_mouse() {
+    // TODO: Windows mouse
+    return mouse;
+}
+
+
+Key terminal_read_keyboard() {
     if (_kbhit()) {
         return _getch();
     } else {
@@ -177,7 +187,7 @@ Key terminal_key() {
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-void terminal_init() {
+void terminal_init() { 
     // ncurses setup
     initscr();
     cbreak();
@@ -191,22 +201,102 @@ void terminal_init() {
     
     // Hide the cursor
     curs_set(0);
+
+    // Make the mouse responsive (disable click delay)
+    mouseinterval(0);
+    
+    mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, nullptr);
+
+    // Enable mouse *movement* tracking at the terminal level.  This
+    // causes the mouse to send fake keystrokes.
+    printf("\033[?1003h\033[2K\n");
 }
 
 
-Key terminal_key() {
-    // ncurses
-    const Key c = getch();
+Mouse terminal_read_mouse() {
+    // The mouse is processed through the keyboard in curses, so
+    // we need to read from the keyboard to update the mouse
+    const Key c = terminal_read_keyboard();
+
+    if (c != '\0') {
+        // Put this actual keyboard keystroke back
+        ungetch(c);
+    }
+        
+    return mouse;
+}
+
+
+Key terminal_read_keyboard() {
+    // getch() is modified to be non-blocking by
+    // curses.
+    Key c = getch();
+
+    // Filter out mouse information
+    while (c == KEY_MOUSE) {
+        MEVENT event;
+        
+        if (getmouse(&event) == OK) {
+
+            mouse.position.x = event.x;
+            mouse.position.y = event.y;
+                
+            if (event.bstate & BUTTON1_PRESSED) {
+                mouse.button |= 0x1;
+            }
+
+            if (event.bstate & BUTTON1_RELEASED) {
+                mouse.button &= 0xFF - 0x1;
+            }
+
+            if (event.bstate & BUTTON2_PRESSED) {
+                mouse.button |= 0x2;
+            }
+
+            if (event.bstate & BUTTON2_RELEASED) {
+                mouse.button &= 0xFF - 0x2;
+            }
+
+            if (event.bstate & BUTTON3_PRESSED) {
+                mouse.button |= 0x4;
+            }
+
+            if (event.bstate & BUTTON3_RELEASED) {
+                mouse.button &= 0xFF - 0x4;
+            }
+
+            if (event.bstate & BUTTON4_PRESSED) {
+                mouse.button |= 0x8;
+            }
+
+            if (event.bstate & BUTTON4_RELEASED) {
+                mouse.button &= 0xFF - 0x8;
+            }
+
+            if (event.bstate & BUTTON5_PRESSED) {
+                mouse.button |= 0x10;
+            }
+
+            if (event.bstate & BUTTON5_RELEASED) {
+                mouse.button &= 0xFF - 0x10;
+            }
+        }
+        c = getch();
+    }
+    
     return (c == ERR) ? '\0' : c;
 }
 
 
 void terminal_cleanup() {
-    // ncurses
-    endwin();
-
+    // Disable mouse movement tracking (and then erase this line)
+    printf("\033[?1000l\033[2K\n");
+    
     // Reset the terminal
-    printf("\x1b[0m\n");
+    printf("\x1b[0m\033[2K\n");
+
+    // Shut down ncurses
+    endwin();
 }
 
 

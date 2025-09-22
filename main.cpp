@@ -1,3 +1,10 @@
+/*
+
+  This file is a demo of how to use the textgame library for terminal mode
+  games.
+  
+ */
+
 #include "textgame.h"
 #include <stdio.h>
 
@@ -6,8 +13,9 @@ Color3 get_stat_color(int value) {
     // Normalize 8-18 to 0-1
     float t = clamp(float(value - 8) / 10.0f, 0.0f, 1.0f);
     // Map to hue: blue (2/3) for low values to red (0) for high values
-    return hsv_to_color3((2.0f/3.0f) * (1.0f - t), 0.5f, 1.0f);
+    return hsv_to_color3((2.0f / 3.0f) * (1.0f - t), 0.5f, 1.0f);
 }
+
 
 int main(const int argc, const char* argv[]) {
     terminal_init();
@@ -30,6 +38,7 @@ int main(const int argc, const char* argv[]) {
         image_set(map, Vector2i(map.size.x - 1, y), Pixel(RED, u'║'), true);
         image_set(map, Vector2i(map.size.x - 15, y), Pixel(RED, u'│'), true);
     }
+    
     image_set(map, Vector2i(0, 0), Pixel(RED, u'╔'), true);
     image_set(map, Vector2i(0, map.size.y - 1), Pixel(RED, u'╚'), true);
     
@@ -74,7 +83,7 @@ int main(const int argc, const char* argv[]) {
     }
 
     // Draw river - random walk from top to bottom
-    const Pixel river(Color3(0.0f, 0.6f, 1.0f), u'≈', BLUE);
+    const Pixel river(Color3(0.0f, 0.6f, 1.0f), U'≈', BLUE);
     int river_x = (map.size.x - 15) / 4;
     
     for (int y = 1; y < map.size.y - 1; ++y) {
@@ -154,9 +163,19 @@ int main(const int argc, const char* argv[]) {
     Image framebuffer;
     image_resize(framebuffer, terminal_size());
 
+    // Main loop
     Key ch = KEY_NONE;
+    
+    // For debugging
+    Key last_key = KEY_NONE;
     while (ch != KEY_ESCAPE) {
-        ch = terminal_key();
+        ch = terminal_read_keyboard();
+
+        if (ch) {
+            last_key = ch;
+        }
+
+        Mouse mouse = terminal_read_mouse();
         
         // Handle player movement
         Vector2i new_pos = player_pos;
@@ -170,7 +189,7 @@ int main(const int argc, const char* argv[]) {
             ++new_pos.x;
         }
         
-        // Check if new position is valid (space character)
+        // Check if new position is traversable
         Pixel target_pixel = image_get(map, new_pos);
         if (target_pixel.ch == u' ' || target_pixel.ch == river.ch) {
             player_pos = new_pos;
@@ -181,7 +200,14 @@ int main(const int argc, const char* argv[]) {
         
         // Draw player
         image_set(framebuffer, player_pos, Pixel(RED, U'@'));
+
+        // Draw debugging info
+        image_print(framebuffer, framebuffer.size - Vector2i(14, 8),
+                    format("Last Key: %3d\nMouse:  %2dx%2d\nButton:   %3x",
+                           last_key, mouse.position.x, mouse.position.y,
+                           mouse.button));
         
+        // Show the framebuffer on the screen
         image_display(framebuffer);
         
         // 1/60 second
