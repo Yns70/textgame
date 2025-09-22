@@ -3,9 +3,9 @@ real-time games that run in a terminal in text mode.
 
 ![](screenshot.png)
 
-It supports:
+# Features
 
-- Full 32-bit Unicode characters
+- Full Unicode support using [char32_t characters](https://en.wikipedia.org/wiki/UTF-32) and strings
 - 24-bit (RBA8) color for foreground and background
 - Keyboard input
 - Clipping region stack
@@ -13,3 +13,21 @@ It supports:
 - Text printing with word wrap
 - Number formatting to string
 - Windows 11, macOS, Linux
+- Struct and function C-like API, with C++ strings and destructors for memory management
+
+# Files
+
+`main.cpp`
+: Demo program
+
+`textgame.h`
+: Cross-platform header and entry point documentation.
+  Defines `Vector2i`, `Color3`, `String`, `Character`,
+  `Image`, overloaded operators, and helper functions.
+
+`textgame.cpp`
+: Cross-platform library implementation
+
+# License
+
+MIT License
