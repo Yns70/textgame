@@ -66,13 +66,37 @@ Vector2i terminal_size() {
 }
 
 
+static void set_cursor_visibility(BOOL v) {
+
+    // Hide the cursor
+    HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_CURSOR_INFO cursorInfo;
+    GetConsoleCursorInfo(out, &cursorInfo);
+    cursorInfo.bVisible = v;
+    SetConsoleCursorInfo(out, &cursorInfo);
+}
+
+
+void terminal_init() {
+    // Enable UTF-8 output
+    SetConsoleOutputCP(65001);
+    set_cursor_visibility(FALSE);
+}
+
+
 void terminal_cleanup() {
+    set_cursor_visibility(TRUE);
+
     // Reset the terminal
     printf("\x1b[0m\n");
 }
 
 Key terminal_key() {
-    return _kbhit();
+    if (_kbhit()) {
+        return _getch();
+    } else {
+        return '\0';
+    }
 }
 
 #else
@@ -109,37 +133,10 @@ Key terminal_key() {
 void terminal_cleanup() {
     // ncurses
     endwin();
-    
+
     // Reset the terminal
     printf("\x1b[0m\n");
 }
-
-
-#if 0
-/*
-   Linux (POSIX) implementation of _kbhit().
-   Morgan McGuire, morgan@casual-effects.com
-   https://github.com/morgan3d/misc/blob/main/kbhit/kbhit.cpp
-*/
-static char _kbhit() {
-    static const int STDIN = 0;
-    static bool initialized = false;
-
-    if (! initialized) {
-        // Use termios to turn off line buffering
-        termios term;
-        tcgetattr(STDIN, &term);
-        term.c_lflag &= ~ICANON;
-        tcsetattr(STDIN, TCSANOW, &term);
-        setbuf(stdin, NULL);
-        initialized = true;
-    }
-
-    int bytesWaiting;
-    ioctl(STDIN, FIONREAD, &bytesWaiting);
-    return bytesWaiting;
-}
-#endif
 
 
 Vector2i terminal_size() {
@@ -212,6 +209,8 @@ bool operator!=(const Vector2i& a, const Vector2i& b) {
     return !(a == b);
 }
 
+//////////////////////////////////////////////////////////////////////////////////
+
 // Global operator implementations for Color3i
 Color3i operator+(const Color3i& a, const Color3i& b) {
     return Color3i(a.r + b.r, a.g + b.g, a.b + b.b);
@@ -281,6 +280,7 @@ bool operator!=(const Color3i& a, const Color3i& b) {
 Image::Image(Vector2i size, Pixel value) {
     image_resize(*this, size);
 }
+
 
 void image_resize(Image& f, Vector2i new_size) {
     f.size = new_size;
@@ -400,15 +400,17 @@ Rect rect_intersect(const Rect& a, const Rect& b) {
     return result;
 }
 
-/*  https://en.wikipedia.org/wiki/ANSI_escape_code#24-bit */
+/* https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit */
 static int color3i_to_ansi(Color3i color) {
     return 16 + clamp(color.r, 0, 5) * 36 + clamp(color.g, 0, 5) * 6 + clamp(color.b, 0, 5);
 }
 
+/* https://en.wikipedia.org/wiki/ANSI_escape_code#24-bit */
+
 
 void image_display(Image& f) {
     // Get terminal dimensions for clipping
-    Vector2i term_size = terminal_size();
+    const Vector2i term_size = terminal_size();
     
     // Calculate the actual drawing area (intersection of image and terminal)
     Vector2i draw_size;
@@ -420,7 +422,7 @@ void image_display(Image& f) {
         return;
     }
 
-    // Avoid per-frame allocation
+    // Avoid per-frame allocation by caching the buffer
     static char* buffer = nullptr;
     static size_t buffer_size = 0;
 

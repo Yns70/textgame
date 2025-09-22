@@ -1,6 +1,5 @@
-#include "textgame.h"
+﻿#include "textgame.h"
 #include <stdio.h>
-
 
 
 int main(const int argc, const char* argv[]) {
@@ -11,27 +10,28 @@ int main(const int argc, const char* argv[]) {
     Image map;
     image_resize(map, terminal_size());
 
-    for (int x = 1; x < map.size.x - 1; ++x) {
-        image_set(map, Vector2i(x, 0), Pixel(RED, u'\u2550'));
-        image_set(map, Vector2i(x, map.size.y - 1), Pixel(RED, u'\u2550'));
+    for (int x = 1; x < map.size.x - 1; ++x) {        
+        //        image_set(map, Vector2i(x, 0), Pixel(RED, u'\u2550'));
+        image_set(map, Vector2i(x, 0), Pixel(RED, u'═'));
+        image_set(map, Vector2i(x, map.size.y - 1), Pixel(RED, u'═'));
     }
     
-    image_set(map, Vector2i(0, 0), Pixel(RED, u'\u2554'));
-    image_set(map, Vector2i(0, map.size.y - 1), Pixel(RED, u'\u255A'));
+    image_set(map, Vector2i(0, 0), Pixel(RED, u'╔'));
+    image_set(map, Vector2i(0, map.size.y - 1), Pixel(RED, u'╚'));
     
-    image_set(map, Vector2i(map.size.x - 1, 0), Pixel(RED, u'\u2557'));
-    image_set(map, Vector2i(map.size.x - 1, map.size.y - 1), Pixel(RED, u'\u255D'));
+    image_set(map, Vector2i(map.size.x - 1, 0), Pixel(RED, u'╗'));
+    image_set(map, Vector2i(map.size.x - 1, map.size.y - 1), Pixel(RED, u'╝'));
     
     for (int y = 1; y < map.size.y - 1; ++y) {
-        image_set(map, Vector2i(0, y), Pixel(RED, u'\u2551'));
-        image_set(map, Vector2i(map.size.x - 1, y), Pixel(RED, u'\u2551'));
+        image_set(map, Vector2i(0, y), Pixel(RED, u'║'));
+        image_set(map, Vector2i(map.size.x - 1, y), Pixel(RED, u'║'));
     }
     
     // Some random trees
     for (int i = 0; i < 100; ++i) {
         const int x = rand() % (map.size.x - 2) + 1;
         const int y = rand() % (map.size.y - 2) + 1;
-        image_set(map, Vector2i(x, y), Pixel(GREEN, u'\u2663'));
+        image_set(map, Vector2i(x, y), Pixel(GREEN, u'♣'));
     }
 
     // Create framebuffer
@@ -59,7 +59,7 @@ int main(const int argc, const char* argv[]) {
         
         // Check if new position is valid (space character)
         Pixel target_pixel = image_get(map, new_pos);
-        if (target_pixel.ch == u'\u0020') {
+        if (target_pixel.ch == u' ') {
             player_pos = new_pos;
         }
         
@@ -67,7 +67,7 @@ int main(const int argc, const char* argv[]) {
         image_blit(framebuffer, Vector2i(0, 0), map, Vector2i(0, 0), map.size, true);
         
         // Draw player
-        image_set(framebuffer, player_pos, Pixel(YELLOW, u'\u0040'));
+        image_set(framebuffer, player_pos, Pixel(YELLOW, u'@'));
         
         image_display(framebuffer);
         

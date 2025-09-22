@@ -1,1 +1,1 @@
-- Test colors and output on Windows
+- Test 24-bit color on MacOS
