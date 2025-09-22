@@ -246,12 +246,3 @@ void image_blit(Image& dst, Vector2i dst_corner, const Image& src, Vector2i src_
    character (space, newline, or punctuation) at which to break the current line. Obeys the current
    image clipping region. Returns the number of lines written. */
 int image_print(Image& img, Vector2i corner, const String& str, Color3 fg = WHITE, Color3 bg = BLACK, bool overwrite_bg = false, int word_wrap = 100000);
-
-#ifdef _MSC_VER
-// https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/kbhit?view=msvc-170
-#include <conio.h>
-
-#else
-int _kbhit();
-
-#endif
