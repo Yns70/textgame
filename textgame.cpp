@@ -538,20 +538,13 @@ int image_print(Image& img, Vector2i corner, const String& str, Color3 fg, Color
     
     for (size_t i = 0; i < str.length(); ++i) {
         Character ch = str[i];
-        
-        // Handle explicit newlines
-        if (ch == U'\n') {
-            pos.x = corner.x;
-            ++pos.y;
-            ++lines_written;
-            continue;
-        }
-        
+            
         // Check if we need to wrap
-        if (pos.x >= corner.x + word_wrap) {
+        if (ch != U'\n' && pos.x >= corner.x + word_wrap) {
             // Look backwards up to 10 characters for a good break point
             size_t break_pos = i;
             int lookback = 0;
+            bool found_break = false;
             
             while (lookback < 10 && break_pos > 0) {
                 Character prev_ch = str[break_pos - 1];
@@ -559,23 +552,33 @@ int image_print(Image& img, Vector2i corner, const String& str, Color3 fg, Color
                     prev_ch == U'.' || prev_ch == U',' || prev_ch == U';' || 
                     prev_ch == U':' || prev_ch == U'!' || prev_ch == U'?') {
                     // Found a good break point
-                    i = break_pos - 1; // Will be incremented by loop
+                    i = break_pos - 1; // Will be incremented by loop again
+                    found_break = true;
                     break;
                 }
                 --break_pos;
                 ++lookback;
             }
-            
-            // Move to next line
+
+            if (! found_break) {
+                // Back up one character and break here
+                --i;
+            }
+
+            // Inject newline
+            ch = U'\n';
+        }
+
+        // Handle injected or explicit newlines
+        if (ch == U'\n') {
             pos.x = corner.x;
             ++pos.y;
             ++lines_written;
-            continue;
+        } else {        
+            // Place the character (clipping handled by image_set)
+            image_set(img, pos, Pixel(fg, ch, overwrite_bg ? bg : image_get(img, pos).bg));
+            ++pos.x;
         }
-        
-        // Place the character (clipping handled by image_set)
-        image_set(img, pos, Pixel(fg, ch, overwrite_bg ? bg : image_get(img, pos).bg));
-        ++pos.x;
     }
     
     return lines_written;

@@ -43,10 +43,8 @@ int main(const int argc, const char* argv[]) {
     }
     
     // Faux UI
-    /*
-    image_print(map, Vector2i(map.size.x - 14, 0), U"Score: 0");
-    image_print(map, Vector2i(map.size.x - 14, map.size.y - 1), U"Press ESC to quit");
-*/
+    image_print(map, Vector2i(map.size.x - 14, 1), U"Score: 0");
+    image_print(map, Vector2i(map.size.x - 14, map.size.y - 2), U"Press ESC to quit");
 
     // Create framebuffer
     Image framebuffer;
