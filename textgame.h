@@ -157,6 +157,7 @@ struct Color3 {
 };
 
 extern const Color3 WHITE;
+extern const Color3 GRAY;
 extern const Color3 RED;
 extern const Color3 GREEN;
 extern const Color3 BLUE;
@@ -164,6 +165,13 @@ extern const Color3 BLACK;
 extern const Color3 CYAN;
 extern const Color3 MAGENTA;
 extern const Color3 YELLOW;
+extern const Color3 PINK;
+
+/* Convert HSV color space to RGB Color3. H, S, and V all in range [0,1] */
+Color3 hsv_to_color3(float h, float s, float v);
+
+/* Format a string like sprintf but return a new String (UTF-32). Format string should be UTF-8. */
+String format(const char* fmt, ...);
 
 // Global operator forward declarations for Color3
 Color3 operator+(const Color3& a, const Color3& b);
@@ -189,7 +197,7 @@ struct Pixel {
     Pixel() : fg(), ch(0), bg() {}
     Pixel(Character c) : fg(), ch(c), bg() {}
     Pixel(Color3 f, Character c, Color3 b = BLACK) : fg(f), ch(c), bg(b) {}
-    Pixel(Color3 b) : fg(WHITE), ch(0), bg(b) {}
+    Pixel(Color3 b) : fg(WHITE), ch(U' '), bg(b) {}
 };
 
 
@@ -212,7 +220,10 @@ void image_resize(Image& img, Vector2i new_size);
 void image_clear(Image& img, Pixel value);
 
 /* Obeys the current clipping region */ 
-void image_set(Image& img, Vector2i pix, Pixel val);
+void image_set(Image& img, Vector2i pix, Pixel val, bool overwrite_bg = false);
+
+/* Obeys the current clipping region and only sets background color */
+void image_set_bg(Image& img, Vector2i pix, Color3 bg);
 
 /* Ignores the current clipping region */
 Pixel image_get(const Image& img, Vector2i pix);
@@ -234,7 +245,7 @@ void image_blit(Image& dst, Vector2i dst_corner, const Image& src, Vector2i src_
    down to the next y line, looking up to 10 characters backwards to find a breaking
    character (space, newline, or punctuation) at which to break the current line. Obeys the current
    image clipping region. Returns the number of lines written. */
-int image_print(Image& img, Vector2i corner, const String& str, Color3 fg = WHITE, Color3 bg = BLACK, bool overwrite_bg = false, int word_wrap = INT_MAX);
+int image_print(Image& img, Vector2i corner, const String& str, Color3 fg = WHITE, Color3 bg = BLACK, bool overwrite_bg = false, int word_wrap = 100000);
 
 #ifdef _MSC_VER
 // https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/kbhit?view=msvc-170

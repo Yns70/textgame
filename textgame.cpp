@@ -3,8 +3,12 @@
 #include <cassert>
 #include <chrono>
 #include <thread>
+#include <cstdarg>
+#include <codecvt>
+#include <locale>
 
 const Color3 WHITE(1.0f, 1.0f, 1.0f);
+const Color3 GRAY(0.5f, 0.5f, 0.5f);
 const Color3 RED(1.0f, 0.0f, 0.0f);
 const Color3 GREEN(0.0f, 1.0f, 0.0f);
 const Color3 BLUE(0.0f, 0.0f, 1.0f);
@@ -12,6 +16,74 @@ const Color3 BLACK(0.0f, 0.0f, 0.0f);
 const Color3 CYAN(0.0f, 1.0f, 1.0f);
 const Color3 MAGENTA(1.0f, 0.0f, 1.0f);
 const Color3 YELLOW(1.0f, 1.0f, 0.0f);
+const Color3 PINK(1.0f, 0.4f, 0.7f);
+
+Color3 hsv_to_color3(float h, float s, float v) {
+    // Clamp inputs to valid ranges
+    h = fmod(h, 1.0f);
+    if (h < 0.0f) h += 1.0f;
+    s = clamp(s, 0.0f, 1.0f);
+    v = clamp(v, 0.0f, 1.0f);
+    
+    float c = v * s; // Chroma
+    float h_sector = h * 6.0f; // Convert to 0-6 range for sectors
+    float x = c * (1.0f - fabs(fmod(h_sector, 2.0f) - 1.0f));
+    float m = v - c;
+    
+    float r, g, b;
+    
+    if (h_sector < 1.0f) {
+        r = c; g = x; b = 0.0f;
+    } else if (h_sector < 2.0f) {
+        r = x; g = c; b = 0.0f;
+    } else if (h_sector < 3.0f) {
+        r = 0.0f; g = c; b = x;
+    } else if (h_sector < 4.0f) {
+        r = 0.0f; g = x; b = c;
+    } else if (h_sector < 5.0f) {
+        r = x; g = 0.0f; b = c;
+    } else {
+        r = c; g = 0.0f; b = x;
+    }
+    
+    return Color3(r + m, g + m, b + m);
+}
+
+String format(const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    
+    // First, determine the required buffer size
+    va_list args_copy;
+    va_copy(args_copy, args);
+    int size = vsnprintf(nullptr, 0, fmt, args_copy);
+    va_end(args_copy);
+    
+    if (size < 0) {
+        va_end(args);
+        return String(); // Return empty string on error
+    }
+    
+    // Allocate buffer and format the string
+    std::vector<char> buffer(size + 1);
+    vsnprintf(buffer.data(), buffer.size(), fmt, args);
+    va_end(args);
+    
+    // Convert UTF-8 to UTF-32
+    std::string utf8_str(buffer.data());
+    std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
+    
+    try {
+        return converter.from_bytes(utf8_str);
+    } catch (const std::range_error&) {
+        // Fallback: convert character by character for invalid UTF-8
+        String result;
+        for (char c : utf8_str) {
+            result.push_back(static_cast<char32_t>(static_cast<unsigned char>(c)));
+        }
+        return result;
+    }
+}
 
 // Have to define these before ncurses makes them into macros
 const Key KEY_NONE = 0;
@@ -283,7 +355,7 @@ void image_resize(Image& f, Vector2i new_size) {
     f.size = new_size;
     f.data.resize(f.size.x * f.size.y);
     f.clip.clear();
-    f.clip.push_back({Vector2i(0, 0), f.size});
+    f.clip.push_back({Vector2i(0, 0), f.size - Vector2i(1, 1)});
     image_clear(f, ' ');
 }
 
@@ -297,16 +369,36 @@ void image_clear(Image& f, Pixel value) {
 }
 
 
-void image_set(Image& f, Vector2i pix, Pixel val) {
+void image_set(Image& f, Vector2i pix, Pixel val, bool overwrite_bg) {
     assert(!f.clip.empty());
     
     if (val.ch != '\0') {
         // Check if pixel is within current clipping region
         const Rect& clip = f.clip.back();
-        if (pix.x >= clip.min.x && pix.x <= clip.max.x &&
-            pix.y >= clip.min.y && pix.y <= clip.max.y) {
+        if ((pix.x >= clip.min.x) && (pix.x <= clip.max.x) &&
+            (pix.y >= clip.min.y) && (pix.y <= clip.max.y)) {
+            
+            if (! overwrite_bg) {
+                // Preserve existing background color
+                val.bg = f.data[pix.x + pix.y * f.size.x].bg;
+            }
+            
             f.data[pix.x + pix.y * f.size.x] = val;
         }
+    }
+}
+
+void image_set_bg(Image& f, Vector2i pix, Color3 bg) {
+    assert(!f.clip.empty());
+    
+    // Check if pixel is within current clipping region
+    const Rect& clip = f.clip.back();
+    if (pix.x >= clip.min.x && pix.x <= clip.max.x &&
+        pix.y >= clip.min.y && pix.y <= clip.max.y) {
+        
+        // Only modify the background color, preserve ch and fg
+        Pixel& existing = f.data[pix.x + pix.y * f.size.x];
+        existing.bg = bg;
     }
 }
 
@@ -515,16 +607,8 @@ void image_blit
                 continue;
             }
             
-            // Prepare destination pixel
-            Pixel dst_pixel = src_pixel;
-            if (!overwrite_bg) {
-                // Preserve destination background color
-                Pixel existing = image_get(dst, dst_pos);
-                dst_pixel.bg = existing.bg;
-            }
-            
             // Set pixel (clipping handled by image_set)
-            image_set(dst, dst_pos, dst_pixel);
+            image_set(dst, dst_pos, src_pixel, overwrite_bg);
         }
     }
 }
@@ -536,49 +620,90 @@ int image_print(Image& img, Vector2i corner, const String& str, Color3 fg, Color
     Vector2i pos = corner;
     int lines_written = 1; // Start with 1 since we're on the first line
     
+    const int max_lookback = std::min(word_wrap / 2, 10);
     for (size_t i = 0; i < str.length(); ++i) {
         Character ch = str[i];
             
-        // Check if we need to wrap
-        if (ch != U'\n' && pos.x >= corner.x + word_wrap) {
-            // Look backwards up to 10 characters for a good break point
-            size_t break_pos = i;
-            int lookback = 0;
-            bool found_break = false;
-            
-            while (lookback < 10 && break_pos > 0) {
-                Character prev_ch = str[break_pos - 1];
-                if (prev_ch == U' ' || prev_ch == U'\n' || prev_ch == U'-' || 
-                    prev_ch == U'.' || prev_ch == U',' || prev_ch == U';' || 
-                    prev_ch == U':' || prev_ch == U'!' || prev_ch == U'?') {
-                    // Found a good break point
-                    i = break_pos - 1; // Will be incremented by loop again
-                    found_break = true;
-                    break;
-                }
-                --break_pos;
-                ++lookback;
-            }
-
-            if (! found_break) {
-                // Back up one character and break here
-                --i;
-            }
-
-            // Inject newline
-            ch = U'\n';
-        }
-
-        // Handle injected or explicit newlines
+        // Handle explicit newlines
         if (ch == U'\n') {
             pos.x = corner.x;
             ++pos.y;
             ++lines_written;
-        } else {        
-            // Place the character (clipping handled by image_set)
-            image_set(img, pos, Pixel(fg, ch, overwrite_bg ? bg : image_get(img, pos).bg));
-            ++pos.x;
+            continue;
         }
+
+        // Look ahead to see if we need to wrap within the next max_lookback characters
+        bool need_wrap = false;
+        size_t wrap_pos = i;
+        
+        // Quick check: could the remaining string possibly exceed the wrap boundary?
+        size_t remaining_chars = str.length() - i;
+        int chars_until_wrap = (corner.x + word_wrap) - pos.x;
+        if (remaining_chars > static_cast<size_t>(chars_until_wrap)) {
+            // Look ahead to find where we would exceed the boundary
+            int temp_x = pos.x;
+            for (size_t j = i; j < str.length() && j < i + max_lookback; ++j) {
+                if (str[j] == U'\n') break; // Stop at explicit newlines
+                if (temp_x >= corner.x + word_wrap) {
+                    need_wrap = true;
+                    wrap_pos = j;
+                    break;
+                }
+                ++temp_x;
+            }
+
+            if (need_wrap) {
+                // Look backwards from wrap_pos to find a good break point
+                size_t break_pos = wrap_pos;
+                int lookback = 0;
+                bool found_break = false;
+                
+                while ((lookback < max_lookback) && (break_pos > i) && !found_break) {
+                    Character prev_ch = str[break_pos - 1];
+                    if (prev_ch == U' ' || prev_ch == U'\n' || prev_ch == U'-' || 
+                        prev_ch == U'.' || prev_ch == U','  || prev_ch == U';' || 
+                        prev_ch == U':' || prev_ch == U'!'  || prev_ch == U'?') {
+                        // Found a good break point. Break right after this character
+                        found_break = true;
+                        break; // Exit the search loop
+                    }
+                    --break_pos;
+                    ++lookback;
+                }
+                
+                // We need to process characters up to the break point first
+                if (found_break) {
+                    // Process characters from current position up to and including the punctuation
+                    for (size_t j = i; j < break_pos; ++j) {
+                        image_set(img, pos, Pixel(fg, str[j], bg), overwrite_bg);
+                        ++pos.x;
+                    }
+                    
+                    // Now handle the line break
+                    pos.x = corner.x;
+                    ++pos.y;
+                    ++lines_written;
+                    
+                    // Skip spaces after the punctuation for the new line
+                    i = break_pos;
+                    while (i < str.length() && str[i] == U' ') {
+                        ++i;
+                    }
+                    --i; // Will be incremented by loop
+                } else {
+                    // Force break case - back up one character and break
+                    --i; // Back up so we can reprocess this character on the new line
+                    pos.x = corner.x;
+                    ++pos.y;
+                    ++lines_written;
+                }
+                continue; // Skip the normal character processing
+            }
+        }
+
+        // Place the character (clipping handled by image_set)
+        image_set(img, pos, Pixel(fg, ch, bg), overwrite_bg);
+        ++pos.x;
     }
     
     return lines_written;
