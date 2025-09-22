@@ -49,27 +49,6 @@ int main(const int argc, const char* argv[]) {
         }
     }
     
-    // Draw river - random walk from top to bottom
-    const Pixel river(Color3(0.0f, 0.6f, 1.0f), u'≈', BLUE);
-    int river_x = (map.size.x - 15) / 4;
-    
-    for (int y = 1; y < map.size.y - 1; ++y) {
-        // Random walk: -1 (left), 0 (straight), +1 (right)
-        int direction = (rand() % 3) - 1;
-        river_x += direction;
-        
-        // Keep river within bounds (away from borders and UI)
-        river_x = std::max(1, std::min(map.size.x - 16, river_x));
-        
-        if (direction == 0) {
-            // Moving straight down - draw one block
-            image_set(map, Vector2i(river_x, y), river, true);
-        } else {
-            // Moving left or right - draw two blocks for 4-connectivity
-            image_set(map, Vector2i(river_x, y), river, true);
-            image_set(map, Vector2i(river_x - direction, y), river, true);
-        }
-    }
     
     // Sprinkle gold coins
     const Color3 gold(1.0f, 0.8f, 0.0f);
@@ -93,7 +72,29 @@ int main(const int argc, const char* argv[]) {
         
         image_set(map, Vector2i(heart_x, heart_y), Pixel(PINK, U'♥'), true);
     }
+
+    // Draw river - random walk from top to bottom
+    const Pixel river(Color3(0.0f, 0.6f, 1.0f), u'≈', BLUE);
+    int river_x = (map.size.x - 15) / 4;
     
+    for (int y = 1; y < map.size.y - 1; ++y) {
+        // Random walk: -1 (left), 0 (straight), +1 (right)
+        int direction = (rand() % 3) - 1;
+        river_x += direction;
+        
+        // Keep river within bounds (away from borders and UI)
+        river_x = std::max(1, std::min(map.size.x - 16, river_x));
+        
+        if (direction == 0) {
+            // Moving straight down - draw one block
+            image_set(map, Vector2i(river_x, y), river, true);
+        } else {
+            // Moving left or right - draw two blocks for 4-connectivity
+            image_set(map, Vector2i(river_x, y), river, true);
+            image_set(map, Vector2i(river_x - direction, y), river, true);
+        }
+    }
+
     // Faux UI - Character stats
     const Color3 golden_yellow(1.0f, 0.8f, 0.2f);
     
@@ -171,7 +172,7 @@ int main(const int argc, const char* argv[]) {
         
         // Check if new position is valid (space character)
         Pixel target_pixel = image_get(map, new_pos);
-        if (target_pixel.ch == u' ') {
+        if (target_pixel.ch == u' ' || target_pixel.ch == river.ch) {
             player_pos = new_pos;
         }
         
@@ -179,7 +180,7 @@ int main(const int argc, const char* argv[]) {
         image_blit(framebuffer, Vector2i(0, 0), map, Vector2i(0, 0), map.size, true);
         
         // Draw player
-        image_set(framebuffer, player_pos, Pixel(RED, U'@'), true);
+        image_set(framebuffer, player_pos, Pixel(RED, U'@'));
         
         image_display(framebuffer);
         
