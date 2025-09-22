@@ -1,12 +1,14 @@
 /*
   @file textgame.h
 
-  @brief A platform independent library for text-based games such as Dwarf Fortress and Rogue
+  @brief A platform independent library for text-based games such as Dwarf Fortress and Rogue. Windows 11, macOS, and Linux are supported.
 
   Copyright (c) 2025 Shmuel
   Available under the the MIT License 
 
-  Supports 32-bit Unicode, including the Unicode DOS Code Page Block (which may be
+  Supports RGB8 color for foreground and background colors.
+
+  Supports 32-bit Unicode characters, including the Unicode DOS Code Page Block (which may be
   supported by more fonts than the Unicode Box Drawing Block), the Unicode Geometric
   Shapes Block, the Unicode Arrows Block, and the Unicode Chess Pieces. Some useful characters:
 
@@ -142,50 +144,50 @@ Rect rect_intersect(const Rect& a, const Rect& b);
 
 ///////////////////////////////////////////////////////////////////////
 
-/* ANSI color with each channel on the range 0-5 */
-struct Color3i {
-    int r;
-    int g;
-    int b;
+/* Color with each channel on the range 0-1 as floats. */
+struct Color3 {
+    float r;
+    float g;
+    float b;
 
-    Color3i() : r(0), g(0), b(0) {}
-    Color3i(int r, int g, int b) : r(r), g(g), b(b) {}
+    Color3() : r(0.0f), g(0.0f), b(0.0f) {}
+    Color3(float r, float g, float b) : r(r), g(g), b(b) {}
 };
 
-extern const Color3i WHITE;
-extern const Color3i RED;
-extern const Color3i GREEN;
-extern const Color3i BLUE;
-extern const Color3i BLACK;
-extern const Color3i CYAN;
-extern const Color3i MAGENTA;
-extern const Color3i YELLOW;
+extern const Color3 WHITE;
+extern const Color3 RED;
+extern const Color3 GREEN;
+extern const Color3 BLUE;
+extern const Color3 BLACK;
+extern const Color3 CYAN;
+extern const Color3 MAGENTA;
+extern const Color3 YELLOW;
 
-// Global operator forward declarations for Color3i
-Color3i operator+(const Color3i& a, const Color3i& b);
-Color3i& operator+=(Color3i& a, const Color3i& b);
-Color3i operator-(const Color3i& a, const Color3i& b);
-Color3i& operator-=(Color3i& a, const Color3i& b);
-Color3i operator*(const Color3i& a, const Color3i& b);
-Color3i operator*(const Color3i& a, int b);
-Color3i& operator*=(Color3i& a, const Color3i& b);
-Color3i operator/(const Color3i& a, int b);
-Color3i operator/(const Color3i& a, const Color3i& b);
-Color3i& operator/=(Color3i& a, const Color3i& b);
-bool operator==(const Color3i& a, const Color3i& b);
-bool operator!=(const Color3i& a, const Color3i& b);
+// Global operator forward declarations for Color3
+Color3 operator+(const Color3& a, const Color3& b);
+Color3& operator+=(Color3& a, const Color3& b);
+Color3 operator-(const Color3& a, const Color3& b);
+Color3& operator-=(Color3& a, const Color3& b);
+Color3 operator*(const Color3& a, const Color3& b);
+Color3 operator*(const Color3& a, float b);
+Color3& operator*=(Color3& a, const Color3& b);
+Color3 operator/(const Color3& a, float b);
+Color3 operator/(const Color3& a, const Color3& b);
+Color3& operator/=(Color3& a, const Color3& b);
+bool operator==(const Color3& a, const Color3& b);
+bool operator!=(const Color3& a, const Color3& b);
 
 ////////////////////////////////////////////////////////////////////////
 
 struct Pixel {
-    Color3i      fg;
+    Color3       fg;
     Character    ch;
-    Color3i      bg;
+    Color3       bg;
     
     Pixel() : fg(), ch(0), bg() {}
     Pixel(Character c) : fg(), ch(c), bg() {}
-    Pixel(Color3i f, Character c, Color3i b = BLACK) : fg(f), ch(c), bg(b) {}
-    Pixel(Color3i b) : fg(WHITE), ch(0), bg(b) {}
+    Pixel(Color3 f, Character c, Color3 b = BLACK) : fg(f), ch(c), bg(b) {}
+    Pixel(Color3 b) : fg(WHITE), ch(0), bg(b) {}
 };
 
 
@@ -230,7 +232,7 @@ void image_blit(Image& dst, Vector2i dst_corner, const Image& src, Vector2i src_
    down to the next y line, looking up to 10 characters backwards to find a breaking
    character (space, newline, or punctuation) at which to break the current line. Obeys the current
    image clipping region. Returns the number of lines written. */
-int image_print(Image& img, Vector2i corner, const String& str, Color3i fg = WHITE, Color3i bg = BLACK, bool overwrite_bg = false, int word_wrap = INT_MAX);
+int image_print(Image& img, Vector2i corner, const String& str, Color3 fg = WHITE, Color3 bg = BLACK, bool overwrite_bg = false, int word_wrap = INT_MAX);
 
 #ifdef _MSC_VER
 // https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/kbhit?view=msvc-170

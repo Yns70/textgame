@@ -4,14 +4,14 @@
 #include <chrono>
 #include <thread>
 
-const Color3i WHITE(5, 5, 5);
-const Color3i RED(5, 0, 0);
-const Color3i GREEN(0, 5, 0);
-const Color3i BLUE(0, 0, 5);
-const Color3i BLACK(0, 0, 0);
-const Color3i CYAN(0, 5, 5);
-const Color3i MAGENTA(5, 0, 5);
-const Color3i YELLOW(5, 5, 0);
+const Color3 WHITE(1.0f, 1.0f, 1.0f);
+const Color3 RED(1.0f, 0.0f, 0.0f);
+const Color3 GREEN(0.0f, 1.0f, 0.0f);
+const Color3 BLUE(0.0f, 0.0f, 1.0f);
+const Color3 BLACK(0.0f, 0.0f, 0.0f);
+const Color3 CYAN(0.0f, 1.0f, 1.0f);
+const Color3 MAGENTA(1.0f, 0.0f, 1.0f);
+const Color3 YELLOW(1.0f, 1.0f, 0.0f);
 
 // Have to define these before ncurses makes them into macros
 const Key KEY_NONE = 0;
@@ -211,67 +211,64 @@ bool operator!=(const Vector2i& a, const Vector2i& b) {
 
 //////////////////////////////////////////////////////////////////////////////////
 
-// Global operator implementations for Color3i
-Color3i operator+(const Color3i& a, const Color3i& b) {
-    return Color3i(a.r + b.r, a.g + b.g, a.b + b.b);
+// Global operator implementations for Color3
+Color3 operator+(const Color3& a, const Color3& b) {
+    return Color3(a.r + b.r, a.g + b.g, a.b + b.b);
 }
 
-Color3i& operator+=(Color3i& a, const Color3i& b) {
+Color3& operator+=(Color3& a, const Color3& b) {
     a.r += b.r;
     a.g += b.g;
     a.b += b.b;
     return a;
 }
 
-Color3i operator-(const Color3i& a, const Color3i& b) {
-    return Color3i(a.r - b.r, a.g - b.g, a.b - b.b);
+Color3 operator-(const Color3& a, const Color3& b) {
+    return Color3(a.r - b.r, a.g - b.g, a.b - b.b);
 }
 
-Color3i& operator-=(Color3i& a, const Color3i& b) {
+Color3& operator-=(Color3& a, const Color3& b) {
     a.r -= b.r;
     a.g -= b.g;
     a.b -= b.b;
     return a;
 }
 
-Color3i operator*(const Color3i& a, const Color3i& b) {
-    return Color3i(a.r * b.r, a.g * b.g, a.b * b.b);
+Color3 operator*(const Color3& a, const Color3& b) {
+    return Color3(a.r * b.r, a.g * b.g, a.b * b.b);
 }
 
-Color3i operator*(const Color3i& a, int b) {
-    return Color3i(a.r * b, a.g * b, a.b * b);
+Color3 operator*(const Color3& a, float b) {
+    return Color3(a.r * b, a.g * b, a.b * b);
 }
 
-Color3i& operator*=(Color3i& a, const Color3i& b) {
+Color3& operator*=(Color3& a, const Color3& b) {
     a.r *= b.r;
     a.g *= b.g;
     a.b *= b.b;
     return a;
 }
 
-/* Integer division */
-Color3i operator/(const Color3i& a, int b) {
-    return Color3i(a.r / b, a.g / b, a.b / b);
+Color3 operator/(const Color3& a, float b) {
+    return Color3(a.r / b, a.g / b, a.b / b);
 }
 
-/* Integer division */
-Color3i operator/(const Color3i& a, const Color3i& b) {
-    return Color3i(a.r / b.r, a.g / b.g, a.b / b.b);
+Color3 operator/(const Color3& a, const Color3& b) {
+    return Color3(a.r / b.r, a.g / b.g, a.b / b.b);
 }
 
-/* Integer division */
-Color3i& operator/=(Color3i& a, const Color3i& b) {
+Color3& operator/=(Color3& a, const Color3& b) {
     a.r /= b.r;
     a.g /= b.g;
     a.b /= b.b;
     return a;
 }
 
-bool operator==(const Color3i& a, const Color3i& b) {
+bool operator==(const Color3& a, const Color3& b) {
     return a.r == b.r && a.g == b.g && a.b == b.b;
 }
 
-bool operator!=(const Color3i& a, const Color3i& b) {
+bool operator!=(const Color3& a, const Color3& b) {
     return !(a == b);
 }
 
@@ -400,13 +397,11 @@ Rect rect_intersect(const Rect& a, const Rect& b) {
     return result;
 }
 
-/* https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit */
-static int color3i_to_ansi(Color3i color) {
-    return 16 + clamp(color.r, 0, 5) * 36 + clamp(color.g, 0, 5) * 6 + clamp(color.b, 0, 5);
-}
 
 /* https://en.wikipedia.org/wiki/ANSI_escape_code#24-bit */
-
+static uint8_t unorm_to_uint8(float value) {
+    return static_cast<uint8_t>(round(std::max(0.0f, std::min(1.0f, value)) * 255.0f));
+}
 
 void image_display(Image& f) {
     // Get terminal dimensions for clipping
@@ -429,14 +424,14 @@ void image_display(Image& f) {
     // Allocate a buffer large enough for the clipped image when converted to UTF-8.
     // Each pixel requires: 
     //     Up to 4 bytes for the character
-    //     11 bytes for the fg color
-    //     11 bytes for the bg color
+    //     18 bytes for the fg color
+    //     18 bytes for the bg color
     //   -----
-    //     26 bytes per pixel
+    //     40 bytes per pixel
     //
     // Plus up to 12 bytes for cursor positioning per line
     // One byte is required for the null terminator on the entire string
-    size_t required_size = (26 * draw_size.x + 12) * draw_size.y + 1;
+    size_t required_size = (40 * draw_size.x + 12) * draw_size.y + 1;
 
     if (buffer_size < required_size) {
         free(buffer);
@@ -455,9 +450,13 @@ void image_display(Image& f) {
         for (int x = 0; x < draw_size.x; ++x) {
             const Pixel* p = line_start + x;
             
-            b += snprintf(b, required_size - (b - buffer), "\033[38;5;%dm\033[48;5;%dm",
-                   color3i_to_ansi(p->fg),
-                   color3i_to_ansi(p->bg));
+            b += snprintf(b, required_size - (b - buffer), "\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm",
+                   unorm_to_uint8(p->fg.r),
+                   unorm_to_uint8(p->fg.g),
+                   unorm_to_uint8(p->fg.b),
+                   unorm_to_uint8(p->bg.r),
+                   unorm_to_uint8(p->bg.g),
+                   unorm_to_uint8(p->bg.b));
             
             b += char32_to_utf8(p->ch, b);
         }
@@ -531,7 +530,7 @@ void image_blit
 }
 
 
-int image_print(Image& img, Vector2i corner, const String& str, Color3i fg, Color3i bg, bool overwrite_bg, int word_wrap) {
+int image_print(Image& img, Vector2i corner, const String& str, Color3 fg, Color3 bg, bool overwrite_bg, int word_wrap) {
     assert(!img.clip.empty());
     
     Vector2i pos = corner;

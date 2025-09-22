@@ -1,1 +1,0 @@
-- Test 24-bit color on MacOS
