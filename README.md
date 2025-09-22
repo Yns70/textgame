@@ -5,14 +5,15 @@ real-time games that run in a terminal in text mode.
 
 # Features
 
-- Full Unicode support using [char32_t characters](https://en.wikipedia.org/wiki/UTF-32) and strings
+- Windows 11, macOS, Linux
 - 24-bit (RBA8) color for foreground and background
 - Keyboard input
 - Clipping region stack
 - Blitting with transparency
-- Text printing with word wrap
+- Double buffered (no flicker)
+- String printing with word wrap
 - Number formatting to string
-- Windows 11, macOS, Linux
+- Full Unicode support using [char32_t characters](https://en.wikipedia.org/wiki/UTF-32) and strings
 - Struct and function C-like API, with C++ strings and destructors for memory management
 
 # Files
