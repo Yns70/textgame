@@ -4,7 +4,6 @@
   games.
   
  */
-
 #include "textgame.h"
 #include <stdio.h>
 
@@ -29,24 +28,24 @@ int main(const int argc, const char* argv[]) {
 
     // Screen border
     for (int x = 1; x < map.size.x - 1; ++x) {        
-        image_set(map, Vector2i(x, 0), Pixel(RED, u'═'), true);
-        image_set(map, Vector2i(x, map.size.y - 1), Pixel(RED, u'═'), true);
+        image_set(map, Vector2i(x, 0), Pixel(RED, U'═'), true);
+        image_set(map, Vector2i(x, map.size.y - 1), Pixel(RED, U'═'), true);
     }
     
     for (int y = 1; y < map.size.y - 1; ++y) {
-        image_set(map, Vector2i(0, y), Pixel(RED, u'║'), true);
-        image_set(map, Vector2i(map.size.x - 1, y), Pixel(RED, u'║'), true);
-        image_set(map, Vector2i(map.size.x - 15, y), Pixel(RED, u'│'), true);
+        image_set(map, Vector2i(0, y), Pixel(RED, U'║'), true);
+        image_set(map, Vector2i(map.size.x - 1, y), Pixel(RED, U'║'), true);
+        image_set(map, Vector2i(map.size.x - 15, y), Pixel(RED, U'│'), true);
     }
     
-    image_set(map, Vector2i(0, 0), Pixel(RED, u'╔'), true);
-    image_set(map, Vector2i(0, map.size.y - 1), Pixel(RED, u'╚'), true);
+    image_set(map, Vector2i(0, 0), Pixel(RED, U'╔'), true);
+    image_set(map, Vector2i(0, map.size.y - 1), Pixel(RED, U'╚'), true);
     
-    image_set(map, Vector2i(map.size.x - 15, 0), Pixel(RED, u'╤'), true);
-    image_set(map, Vector2i(map.size.x - 15, map.size.y - 1), Pixel(RED, u'╧'), true);
+    image_set(map, Vector2i(map.size.x - 15, 0), Pixel(RED, U'╤'), true);
+    image_set(map, Vector2i(map.size.x - 15, map.size.y - 1), Pixel(RED, U'╧'), true);
 
-    image_set(map, Vector2i(map.size.x - 1, 0), Pixel(RED, u'╗'), true);
-    image_set(map, Vector2i(map.size.x - 1, map.size.y - 1), Pixel(RED, u'╝'), true);
+    image_set(map, Vector2i(map.size.x - 1, 0), Pixel(RED, U'╗'), true);
+    image_set(map, Vector2i(map.size.x - 1, map.size.y - 1), Pixel(RED, U'╝'), true);
 
     // Random trees
     for (int i = 0; i < 100; ++i) {
@@ -54,7 +53,7 @@ int main(const int argc, const char* argv[]) {
         const int y = rand() % (map.size.y - 2) + 1;
         // Don't plant on top of the player
         if (x != player_pos.x || y != player_pos.y) {
-            image_set(map, Vector2i(x, y), Pixel(GREEN, u'♣'), true);
+            image_set(map, Vector2i(x, y), Pixel(GREEN, U'♣'), true);
         }
     }
     

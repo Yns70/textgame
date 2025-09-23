@@ -88,7 +88,7 @@ String format(const char* fmt, ...) {
 // Have to define these before ncurses makes them into macros
 const Key KEY_NONE = 0;
 const Key KEY_ESCAPE = 27;
-const Key KEY_TAB = 8;
+const Key KEY_TAB = 9;
 const Key KEY_ENTER = 13;
 const Key KEY_DELETE = 0512;
 const Key KEY_DOWN = 0402;
@@ -141,7 +141,6 @@ Vector2i terminal_size() {
 
 
 static void set_cursor_visibility(BOOL v) {
-
     // Hide the cursor
     HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_CURSOR_INFO cursorInfo;
@@ -174,7 +173,48 @@ Mouse terminal_read_mouse() {
 
 Key terminal_read_keyboard() {
     if (_kbhit()) {
-        return _getch();
+        Key k = _getch();
+
+        if (k == 224) {
+            // This is a special key, read again to know which
+            k = _getch();
+            switch (k) {
+            case 65:
+            case 72:
+                k = KEY_UP;
+                break;
+
+            case 66:
+            case 80:
+                k = KEY_DOWN;
+                break;
+
+            case 67:
+            case 77:
+                k = KEY_RIGHT;
+                break;
+
+            case 68:
+            case 75:
+                k = KEY_LEFT;
+                break;
+
+            case 83:
+                k = KEY_DELETE;
+                break;
+
+            default:
+                k = 999;
+            }
+        } else if (k >= 59 && k <= 70) {
+            // Function keys
+            k += KEY_F1 - 59;
+        } else if (k == 8) {
+            k = KEY_BACKSPACE;
+        }
+
+        return k;
+
     } else {
         return '\0';
     }
