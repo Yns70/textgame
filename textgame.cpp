@@ -321,6 +321,7 @@ void process_event_queue() {
 void terminal_init() { 
     // ncurses setup
     initscr();
+    
     cbreak();
     noecho();
 
@@ -339,7 +340,9 @@ void terminal_init() {
     mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, nullptr);
 
     // Enable mouse *movement* tracking at the terminal level.  This
-    // causes the mouse to send fake keystrokes.
+    // causes the mouse to send fake keystrokes. iTerm2 doesn't reliably
+    // send movement events, however--it seems to need a few focus events
+    // before it starts streaming them.
     printf("\033[?1003h\033[2K\n");
 }
 

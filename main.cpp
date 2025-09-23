@@ -15,10 +15,9 @@ Color3 get_stat_color(int value) {
     return hsv_to_color3((2.0f / 3.0f) * (1.0f - t), 0.5f, 1.0f);
 }
 
-
 int main(const int argc, const char* argv[]) {
     terminal_init();
-    
+
     // Create the map. This could be different from the size of the terminal.
     Image map;
     image_resize(map, terminal_size());
