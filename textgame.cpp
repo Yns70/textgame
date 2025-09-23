@@ -311,57 +311,6 @@ void process_event_queue() {
 
 }
 
-/*
-Key terminal_read_keyboard() {
-    if (_kbhit()) {
-        Key k = _getch();
-
-        if (k == 224) {
-            // This is a special key, read again to know which
-            k = _getch();
-            switch (k) {
-            case 65:
-            case 72:
-                k = KEY_UP;
-                break;
-
-            case 66:
-            case 80:
-                k = KEY_DOWN;
-                break;
-
-            case 67:
-            case 77:
-                k = KEY_RIGHT;
-                break;
-
-            case 68:
-            case 75:
-                k = KEY_LEFT;
-                break;
-
-            case 83:
-                k = KEY_DELETE;
-                break;
-
-            default:
-                k = 999;
-            }
-        } else if (k >= 59 && k <= 70) {
-            // Function keys
-            k += KEY_F1 - 59;
-        } else if (k == 8) {
-            k = KEY_BACKSPACE;
-        }
-
-        return k;
-
-    } else {
-        return '\0';
-    }
-}
-*/
-
 #else
 
 #include <stdio.h>

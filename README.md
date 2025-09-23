@@ -8,6 +8,7 @@ real-time games that run in a terminal in text mode.
 - Windows 11 terminal, macOS Tahoe Terminal, macOS iTerm2, Linux xterm
 - 24-bit (RBA8) color for foreground and background
 - Keyboard input
+- Mouse input
 - Clipping region stack
 - Blitting with transparency
 - Double buffered (no flicker)
