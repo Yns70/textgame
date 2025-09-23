@@ -168,31 +168,39 @@ int main(const int argc, const char* argv[]) {
     // For debugging
     Key last_key = KEY_NONE;
     while (ch != KEY_ESCAPE) {
-        ch = terminal_read_keyboard();
 
-        if (ch) {
-            last_key = ch;
-        }
+
+          // Handle player movement
+        do {
+            ch = terminal_read_keyboard();
+
+            if (ch) {
+                // Record for debugging
+                last_key = ch;
+            }
+
+            Vector2i new_pos = player_pos;
+            if (ch == 'w' || ch == 'W' || ch == KEY_UP) {
+                --new_pos.y;
+            } else if (ch == 's' || ch == 'S' || ch == KEY_DOWN) {
+                ++new_pos.y;
+            } else if (ch == 'a' || ch == 'A' || ch == KEY_LEFT) {
+                --new_pos.x;
+            } else if (ch == 'd' || ch == 'D' || ch == KEY_RIGHT) {
+                ++new_pos.x;
+            } else if (ch == KEY_ESCAPE) {
+                break;
+            }
+
+            // Check if new position is traversable
+            Pixel target_pixel = image_get(map, new_pos);
+            if (target_pixel.ch == u' ' || target_pixel.ch == river.ch) {
+                player_pos = new_pos;
+            }
+
+        } while (ch);
 
         Mouse mouse = terminal_read_mouse();
-        
-        // Handle player movement
-        Vector2i new_pos = player_pos;
-        if (ch == 'w' || ch == 'W' || ch == KEY_UP) {
-            --new_pos.y;
-        } else if (ch == 's' || ch == 'S' || ch == KEY_DOWN) {
-            ++new_pos.y;
-        } else if (ch == 'a' || ch == 'A' || ch == KEY_LEFT) {
-            --new_pos.x;
-        } else if (ch == 'd' || ch == 'D' || ch == KEY_RIGHT) {
-            ++new_pos.x;
-        }
-        
-        // Check if new position is traversable
-        Pixel target_pixel = image_get(map, new_pos);
-        if (target_pixel.ch == u' ' || target_pixel.ch == river.ch) {
-            player_pos = new_pos;
-        }
         
         // Blit map to framebuffer
         image_blit(framebuffer, Vector2i(0, 0), map, Vector2i(0, 0), map.size, true);
@@ -202,7 +210,7 @@ int main(const int argc, const char* argv[]) {
 
         // Draw debugging info
         image_print(framebuffer, framebuffer.size - Vector2i(14, 8),
-                    format("Last Key: %3d\nMouse:  %2dx%2d\nButton:   %3x",
+                    format("Last Key: %3d\nMouse:%3d,%3d\nButton:   %3x",
                            last_key, mouse.position.x, mouse.position.y,
                            mouse.button));
         

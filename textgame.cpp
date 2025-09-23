@@ -6,6 +6,7 @@
 #include <cstdarg>
 #include <codecvt>
 #include <locale>
+#include <queue>
 
 const Color3 WHITE(1.0f, 1.0f, 1.0f);
 const Color3 GRAY(0.5f, 0.5f, 0.5f);
@@ -96,8 +97,8 @@ const Key KEY_UP = 0403;
 const Key KEY_LEFT = 0404;
 const Key KEY_RIGHT = 0405;
 const Key KEY_HOME = 0406;
+const Key KEY_END = 0550;
 const Key KEY_BACKSPACE = 0407;
-const Key KEY_F0 = 0410;
 const Key KEY_F1 = 0411;
 const Key KEY_F2 = 0412;
 const Key KEY_F3 = 0413;
@@ -114,6 +115,30 @@ void sleep(float seconds) {
 }
 
 static Mouse mouse;
+static std::queue<Key> key_queue;
+
+/* Process the OS event queue, updating mouse and key_queue */
+static void process_event_queue();
+
+
+/* Get the next keystroke in the keyboard queue. Keep reading until this returns '\0' */
+Key terminal_read_keyboard() {
+    process_event_queue();
+    if (key_queue.empty()) {
+        return KEY_NONE;
+    } else {
+        const Key k = key_queue.front();
+        key_queue.pop();
+        return k;
+    }
+}
+
+
+/* Get the latest state of the mouse */
+Mouse terminal_read_mouse() {
+    process_event_queue();
+    return mouse;
+}
 
 
 #ifdef _MSC_VER
@@ -149,11 +174,17 @@ static void set_cursor_visibility(BOOL v) {
     SetConsoleCursorInfo(out, &cursorInfo);
 }
 
+static HANDLE hStdInput = 0;
 
 void terminal_init() {
     // Enable UTF-8 output
     SetConsoleOutputCP(65001);
     set_cursor_visibility(FALSE);
+
+    hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+
+    // ENABLE_EXTENDED_FLAGS disables "quick edit" mode, which is needed for the mouse
+    SetConsoleMode(hStdInput, ENABLE_MOUSE_INPUT | ENABLE_EXTENDED_FLAGS);
 }
 
 
@@ -165,12 +196,122 @@ void terminal_cleanup() {
 }
 
 
-Mouse terminal_read_mouse() {
-    // TODO: Windows mouse
-    return mouse;
+void process_event_queue() {
+    static const int N = 32;
+    INPUT_RECORD event_array[N];
+    DWORD num_events = 0;
+
+    GetNumberOfConsoleInputEvents(hStdInput, &num_events);
+    while (num_events > 0) {
+        ReadConsoleInput(hStdInput, event_array, N, &num_events);
+
+        for (DWORD e = 0; e < num_events; ++e) {
+            // https://learn.microsoft.com/en-us/windows/console/input-record-str
+            const INPUT_RECORD& event = event_array[e];
+
+            if (event.EventType & MOUSE_EVENT) {
+                // https://learn.microsoft.com/en-us/windows/console/mouse-event-record-str
+                mouse.position.x = event.Event.MouseEvent.dwMousePosition.X;
+                mouse.position.y = event.Event.MouseEvent.dwMousePosition.Y;
+                mouse.button = 0;
+                mouse.button |= (event.Event.MouseEvent.dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) ? 1 : 0;
+                mouse.button |= (event.Event.MouseEvent.dwButtonState & RIGHTMOST_BUTTON_PRESSED) ? 2 : 0;
+            } else if (event.EventType & KEY_EVENT) {
+                // https://learn.microsoft.com/en-us/windows/console/key-event-record-str
+                if (event.Event.KeyEvent.bKeyDown) {
+                    Key k = event.Event.KeyEvent.uChar.AsciiChar;
+                    if (k == 0) {
+                        switch (event.Event.KeyEvent.wVirtualKeyCode) {
+                        case VK_BACK:
+                            k = KEY_BACKSPACE;
+                            break;
+
+                        case VK_RETURN:
+                            k = KEY_ENTER;
+                            break;
+
+                        case VK_TAB:
+                            k = KEY_TAB;
+                            break;
+                        case VK_HOME:
+                            k = KEY_HOME;
+                            break;
+
+                        case VK_UP:
+                            k = KEY_UP;
+                            break;
+
+                        case VK_DOWN:
+                            k = KEY_DOWN;
+                            break;
+
+                        case VK_LEFT:
+                            k = KEY_LEFT;
+                            break;
+
+                        case VK_RIGHT:
+                            k = KEY_RIGHT;
+                            break;
+
+                        case VK_DELETE:
+                            k = KEY_DELETE;
+                            break;
+
+                        case VK_F1:
+                            k = KEY_F1;
+                            break;
+
+                        case VK_F2:
+                            k = KEY_F2;
+                            break;
+
+                        case VK_F3:
+                            k = KEY_F3;
+                            break;
+
+                        case VK_F4:
+                            k = KEY_F4;
+                            break;
+
+                        case VK_F5:
+                            k = KEY_F5;
+                            break;
+
+                        case VK_F6:
+                            k = KEY_F6;
+                            break;
+
+                        case VK_F7:
+                            k = KEY_F7;
+                            break;
+
+                        case VK_F8:
+                            k = KEY_F8;
+                            break;
+
+                        case VK_F9:
+                            k = KEY_F9;
+                            break;
+
+                        case VK_F10:
+                            k = KEY_F10;
+                            break; 
+                        }
+                    }
+
+                    if (k) {
+                        key_queue.push(k);
+                    }
+                }
+            }
+        }
+
+        GetNumberOfConsoleInputEvents(hStdInput, &num_events);
+    };
+
 }
 
-
+/*
 Key terminal_read_keyboard() {
     if (_kbhit()) {
         Key k = _getch();
@@ -219,6 +360,7 @@ Key terminal_read_keyboard() {
         return '\0';
     }
 }
+*/
 
 #else
 
@@ -253,78 +395,66 @@ void terminal_init() {
 }
 
 
-Mouse terminal_read_mouse() {
-    // The mouse is processed through the keyboard in curses, so
-    // we need to read from the keyboard to update the mouse
-    const Key c = terminal_read_keyboard();
-
-    if (c != '\0') {
-        // Put this actual keyboard keystroke back
-        ungetch(c);
-    }
-        
-    return mouse;
-}
-
-
-Key terminal_read_keyboard() {
+void process_event_queue() {
     // getch() is modified to be non-blocking by
     // curses.
-    Key c = getch();
+    Key k = getch();
 
-    // Filter out mouse information
-    while (c == KEY_MOUSE) {
-        MEVENT event;
-        
-        if (getmouse(&event) == OK) {
+    while (k != ERR) {
+        if (k == KEY_MOUSE) {
+            MEVENT event;
 
-            mouse.position.x = event.x;
-            mouse.position.y = event.y;
-                
-            if (event.bstate & BUTTON1_PRESSED) {
-                mouse.button |= 0x1;
+            if (getmouse(&event) == OK) {
+
+                mouse.position.x = event.x;
+                mouse.position.y = event.y;
+
+                if (event.bstate & BUTTON1_PRESSED) {
+                    mouse.button |= 0x1;
+                }
+
+                if (event.bstate & BUTTON1_RELEASED) {
+                    mouse.button &= 0xFF - 0x1;
+                }
+
+                if (event.bstate & BUTTON2_PRESSED) {
+                    mouse.button |= 0x2;
+                }
+
+                if (event.bstate & BUTTON2_RELEASED) {
+                    mouse.button &= 0xFF - 0x2;
+                }
+
+                if (event.bstate & BUTTON3_PRESSED) {
+                    mouse.button |= 0x4;
+                }
+
+                if (event.bstate & BUTTON3_RELEASED) {
+                    mouse.button &= 0xFF - 0x4;
+                }
+
+                if (event.bstate & BUTTON4_PRESSED) {
+                    mouse.button |= 0x8;
+                }
+
+                if (event.bstate & BUTTON4_RELEASED) {
+                    mouse.button &= 0xFF - 0x8;
+                }
+
+                if (event.bstate & BUTTON5_PRESSED) {
+                    mouse.button |= 0x10;
+                }
+
+                if (event.bstate & BUTTON5_RELEASED) {
+                    mouse.button &= 0xFF - 0x10;
+                }
             }
-
-            if (event.bstate & BUTTON1_RELEASED) {
-                mouse.button &= 0xFF - 0x1;
-            }
-
-            if (event.bstate & BUTTON2_PRESSED) {
-                mouse.button |= 0x2;
-            }
-
-            if (event.bstate & BUTTON2_RELEASED) {
-                mouse.button &= 0xFF - 0x2;
-            }
-
-            if (event.bstate & BUTTON3_PRESSED) {
-                mouse.button |= 0x4;
-            }
-
-            if (event.bstate & BUTTON3_RELEASED) {
-                mouse.button &= 0xFF - 0x4;
-            }
-
-            if (event.bstate & BUTTON4_PRESSED) {
-                mouse.button |= 0x8;
-            }
-
-            if (event.bstate & BUTTON4_RELEASED) {
-                mouse.button &= 0xFF - 0x8;
-            }
-
-            if (event.bstate & BUTTON5_PRESSED) {
-                mouse.button |= 0x10;
-            }
-
-            if (event.bstate & BUTTON5_RELEASED) {
-                mouse.button &= 0xFF - 0x10;
-            }
+        } else {
+            key_queue.push(k);
         }
-        c = getch();
+
+        k = getch();
     }
-    
-    return (c == ERR) ? '\0' : c;
 }
 
 
@@ -354,6 +484,7 @@ Vector2i terminal_size() {
 #endif // _MSC_VER
 
 /////////////////////////////////////////////////////////////////////////////////////////
+
 Vector2i operator+(const Vector2i& a, const Vector2i& b) {
     return Vector2i(a.x + b.x, a.y + b.y);
 }

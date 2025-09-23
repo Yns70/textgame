@@ -87,9 +87,9 @@ extern const Key KEY_DOWN;
 extern const Key KEY_UP;
 extern const Key KEY_LEFT;
 extern const Key KEY_RIGHT;
+extern const Key KEY_END;
 extern const Key KEY_HOME;
 extern const Key KEY_BACKSPACE;
-extern const Key KEY_F0;
 extern const Key KEY_F1;
 extern const Key KEY_F2;
 extern const Key KEY_F3;
@@ -106,7 +106,7 @@ extern const Key KEY_F10;
 void terminal_init();
 void terminal_cleanup();
 
-/* Get the next keystroke in the keyboard queue */
+/* Get the next keystroke in the keyboard queue. Keep reading until this returns '\0' */
 Key terminal_read_keyboard();
 
 /* Get the latest state of the mouse */
