@@ -16,6 +16,7 @@ real-time games that run in a terminal in text mode.
 - Number formatting to string
 - Full Unicode support using [char32_t characters](https://en.wikipedia.org/wiki/UTF-32) and strings
 - Struct and function C-like API, with C++ strings and destructors for memory management
+- No dependencies--uses only standard built-in platform libraries
 
 # Files
 
