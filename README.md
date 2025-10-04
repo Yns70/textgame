@@ -34,3 +34,15 @@ real-time games that run in a terminal in text mode.
 # License
 
 MIT License
+
+# See Also
+
+Some other small, cross-platform libraries useful for making terminal-mode games:
+
+- [Crossline](https://github.com/jcwangxp/Crossline): readline()
+- [ffaudio](https://github.com/jcwangxp/Crossline): wave audio input and output
+- [Gainput](https://github.com/jkuhlmann/gainput): gamepad input
+- [GameNetworkingSockets](https://github.com/ValveSoftware/GameNetworkingSockets): networking
+- [Recast Navigation](https://recastnav.com/): 3D pathfinding and CPU voxelization
+- [Box2D](https://box2d.org/): 2D physics
+
